@@ -1,7 +1,7 @@
 // app/routes/login.tsx or equivalent route file
 import { redirect } from "react-router";
 import { json } from "@remix-run/node";
-import { authenticator, sessionStorage } from "~/services/auth.server";
+import { login, sessionStorage } from "~/services/auth.server";
 
 // Import this from correct place for your route
 type LoginProps = {
@@ -53,14 +53,20 @@ export default function Component({ actionData }: LoginProps) {
 // Second, we need to export an action function, here we will use the
 // `authenticator.authenticate` method
 export async function action({ request }: LoginActionArgs) {
+        let session = await sessionStorage.getSession(
+      request.headers.get("cookie")
+    );
+
   try {
     // we call the method with the name of the strategy we want to use and the
     // request object
-    let user = await authenticator.authenticate("user-pass", request);
+    const form = await request.formData();
+    const email = form.get("email")?.toString() || "";
+    const password = form.get("password")?.toString() || "";
 
-    let session = await sessionStorage.getSession(
-      request.headers.get("cookie")
-    );
+    const user = await login(email, password);
+
+
 
     session.set("user", user);
 
@@ -71,13 +77,14 @@ export async function action({ request }: LoginActionArgs) {
       },
     });
   } catch (error) {
-    // Return validation errors or authentication errors
-    if (error instanceof Error) {
-      return json({ error: error.message });
-    }
+     session.flash("error", "Invalid username/password");
 
-    // Re-throw any other errors (including redirects)
-    throw error;
+    // Redirect back to the login page with errors.
+    return redirect("/login", {
+      headers: {
+        "Set-Cookie": await sessionStorage.commitSession(session),
+      },
+    });
   }
 }
 
@@ -88,7 +95,7 @@ export async function loader({ request }: LoginLoaderArgs) {
   let user = session.get("user");
 
   // If the user is already authenticated redirect to the dashboard
-  if (user) return redirect("/dashboard");
+  if (user) return redirect("/");
 
   // Otherwise return null to render the login page
   return json(null);
