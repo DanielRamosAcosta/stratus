@@ -3,6 +3,7 @@ import { data, redirect } from "@remix-run/node";
 import { Button } from "../components/ui/button";
 import { sessionStorage } from "../services/auth.server";
 import { useLoaderData } from "@remix-run/react";
+import { useEffect, useRef, useState } from "react";
 import { 
   Folder, 
   File, 
@@ -17,7 +18,8 @@ import {
   Download,
   Trash2,
   Share,
-  Star
+  Star,
+  Command
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -68,6 +70,29 @@ type EntrySymlink = {
 
 export default function Index() {
   const loaderData = useLoaderData<typeof loader>();
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [isMac, setIsMac] = useState(false);
+
+  // Detect if user is on Mac
+  useEffect(() => {
+    setIsMac(navigator.platform.toUpperCase().indexOf('MAC') >= 0);
+  }, []);
+
+  // Add keyboard shortcut for Cmd+K (or Ctrl+K on Windows/Linux)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   function formatBytes(bytes: number) {
     const units = ['B', 'kB', 'MB', 'GB', 'TB', 'PB'];
@@ -128,9 +153,20 @@ export default function Index() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
+                ref={searchInputRef}
                 placeholder="Search in Drive"
-                className="w-64 pl-9"
+                className="w-64 pl-9 pr-12"
               />
+              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                {isMac ? (
+                  <>
+                    <Command className="h-3 w-3" />
+                    <span className="text-xs">K</span>
+                  </>
+                ) : (
+                  'Ctrl+K'
+                )}
+              </kbd>
             </div>
             <ThemeToggle />
           </div>
