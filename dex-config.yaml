@@ -1,0 +1,24 @@
+issuer: https://localhost:5556/dex
+
+storage:
+  type: memory
+
+web:
+  https: 0.0.0.0:5556
+  tlsCert: /etc/ssl/cert.pem
+  tlsKey: /etc/ssl/key.pem
+
+staticClients:
+- id: yagd
+  redirectURIs:
+  - 'http://localhost:5173/auth/callback'
+  name: 'YAGD App'
+  secret: yagd-secret
+
+enablePasswordDB: true
+staticPasswords:
+- email: "john.doe@example.com"
+  # password is "password"
+  hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
+  username: "john.doe"
+  userID: "08a8684b-db88-4b73-90a9-3cd1661f5466"

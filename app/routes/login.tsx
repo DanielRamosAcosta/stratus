@@ -1,24 +1,28 @@
 // app/routes/login.tsx or equivalent route file
 import { redirect } from "react-router";
-import { json } from "@remix-run/node";
+import { data } from "@remix-run/node";
+import * as client from "openid-client";
 import { login, sessionStorage } from "~/services/auth.server";
+import { useLoaderData } from "@remix-run/react";
 
 // Import this from correct place for your route
 type LoginProps = {
-    actionData?: { error?: string };
-}
+  actionData?: { error?: string };
+};
 
 type LoginActionArgs = {
-    request: Request;
+  request: Request;
 };
 
 type LoginLoaderArgs = {
-    request: Request;
+  request: Request;
 };
 
 // First we create our UI with the form doing a POST and the inputs with
 // the names we are going to use in the strategy
 export default function Component({ actionData }: LoginProps) {
+  const data  = useLoaderData<typeof loader>();
+
   return (
     <div>
       <h1>Login</h1>
@@ -45,6 +49,10 @@ export default function Component({ actionData }: LoginProps) {
         </div>
 
         <button type="submit">Sign In</button>
+
+        <a href={data.redirectTo}>
+          Sign in with OpenID Connect
+        </a>
       </form>
     </div>
   );
@@ -53,9 +61,7 @@ export default function Component({ actionData }: LoginProps) {
 // Second, we need to export an action function, here we will use the
 // `authenticator.authenticate` method
 export async function action({ request }: LoginActionArgs) {
-        let session = await sessionStorage.getSession(
-      request.headers.get("cookie")
-    );
+  let session = await sessionStorage.getSession(request.headers.get("cookie"));
 
   try {
     // we call the method with the name of the strategy we want to use and the
@@ -66,8 +72,6 @@ export async function action({ request }: LoginActionArgs) {
 
     const user = await login(email, password);
 
-
-
     session.set("user", user);
 
     // Redirect to the home page after successful login
@@ -77,7 +81,7 @@ export async function action({ request }: LoginActionArgs) {
       },
     });
   } catch (error) {
-     session.flash("error", "Invalid username/password");
+    session.flash("error", "Invalid username/password");
 
     // Redirect back to the login page with errors.
     return redirect("/login", {
@@ -91,6 +95,24 @@ export async function action({ request }: LoginActionArgs) {
 // Finally, we need to export a loader function to check if the user is already
 // authenticated and redirect them to the dashboard
 export async function loader({ request }: LoginLoaderArgs) {
+  // Disable SSL verification for development with self-signed certificates
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+  
+  let config: client.Configuration = await client.discovery(
+    new URL("https://localhost:5556/dex/.well-known/openid-configuration"),
+    "yagd",
+    "yagd-secret"
+  );
+
+  let parameters: Record<string, string> = {
+    redirect_uri: "http://localhost:5173/auth/callback",
+    scope: "openid email profile groups",
+  };
+
+  let redirectTo: URL = client.buildAuthorizationUrl(config, parameters);
+
+  console.log("Redirecting to:", redirectTo.toString());
+
   let session = await sessionStorage.getSession(request.headers.get("cookie"));
   let user = session.get("user");
 
@@ -98,5 +120,5 @@ export async function loader({ request }: LoginLoaderArgs) {
   if (user) return redirect("/");
 
   // Otherwise return null to render the login page
-  return json(null);
+  return data({ redirectTo: redirectTo.toString() });
 }
