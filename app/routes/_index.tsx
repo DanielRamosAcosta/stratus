@@ -145,5 +145,6 @@ export async function loader({ request }: { request: Request }) {
   let session = await sessionStorage.getSession(request.headers.get("cookie"));
   let user = session.get("user");
   if (!user) throw redirect("/login");
+  console.log("user", user);
   return null;
 }

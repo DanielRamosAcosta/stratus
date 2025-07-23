@@ -1,5 +1,7 @@
-import { json } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
+import * as client from "openid-client";
+import { login, sessionStorage } from "~/services/auth.server";
 
 type LoaderData = {
   headers: Record<string, string>;
@@ -71,11 +73,22 @@ export async function loader({ request }: CallbackLoaderArgs) {
   console.log("Search Params:", searchParams);
   console.log("Headers:", headers);
   console.log("Cookies:", cookies);
+  
 
-  return json({
-    headers,
-    url: request.url,
-    searchParams,
-    cookies,
+  let session = await sessionStorage.getSession(request.headers.get("cookie"));
+  let config: client.Configuration = await client.discovery(
+    new URL("https://localhost:5556/dex/.well-known/openid-configuration"),
+    "yagd",
+    "yagd-secret"
+  );
+  
+  // TODO: check how to extract user data
+
+  session.set("user", user);
+  
+  return redirect("/", {
+    headers: {
+      "Set-Cookie": await sessionStorage.commitSession(session),
+    },
   });
 }
