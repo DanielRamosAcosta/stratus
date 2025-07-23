@@ -3,6 +3,7 @@ import { redirect } from "react-router";
 import { data } from "@remix-run/node";
 import * as client from "openid-client";
 import { sessionStorage } from "~/services/auth.server";
+import { oidcInstance } from "../services/oidc.server";
 
 // Import this from correct place for your route
 type LoginProps = {
@@ -29,7 +30,7 @@ export default function Component({ actionData }: LoginProps) {
       ) : null}
 
       <form method="post">
-        <button type="submit">Sign In with SSO</button>
+        <button type="submit">Sign In with Dex</button>
       </form>
     </div>
   );
@@ -38,37 +39,17 @@ export default function Component({ actionData }: LoginProps) {
 // Second, we need to export an action function, here we will use the
 // `authenticator.authenticate` method
 export async function action({ request }: LoginActionArgs) {
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-
   console.log("Login action called");
   let session = await sessionStorage.getSession(request.headers.get("cookie"));
 
   try {
-    let config: client.Configuration = await client.discovery(
-      new URL("https://localhost:5556/dex/.well-known/openid-configuration"),
-      "yagd",
-      "yagd-secret"
-    );
+    const oidcClient = await oidcInstance()
 
-    const redirect_uri = "http://localhost:5173/auth/callback";
-    const scope = "openid email profile groups";
-    let code_verifier: string = client.randomPKCECodeVerifier();
-    let code_challenge: string = await client.calculatePKCECodeChallenge(
-      code_verifier
-    );
+    const { url, codeVerifier } = await oidcClient.buildAuthorizationUrl();
 
-    let parameters: Record<string, string> = {
-      redirect_uri,
-      scope,
-      code_challenge,
-      code_challenge_method: "S256",
-    };
+    session.set("code_verifier", codeVerifier);
 
-    let redirectTo: URL = client.buildAuthorizationUrl(config, parameters);
-
-    session.set("code_verifier", code_verifier);
-
-    return redirect(redirectTo.toString(), {
+    return redirect(url, {
       headers: {
         "Set-Cookie": await sessionStorage.commitSession(session),
       },
@@ -86,8 +67,7 @@ export async function action({ request }: LoginActionArgs) {
   }
 }
 
-// Finally, we need to export a loader function to check if the user is already
-// authenticated and redirect them to the dashboard
+
 export async function loader({ request }: LoginLoaderArgs) {
   let session = await sessionStorage.getSession(request.headers.get("cookie"));
   let accessToken = session.get("access_token");
