@@ -26,6 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
+import { ThemeToggle } from "../components/theme-toggle";
 import {
   Table,
   TableBody,
@@ -94,28 +95,28 @@ export default function Index() {
   const getFileIcon = (entry: any) => {
     switch (entry.type) {
       case 'directory':
-        return <Folder className="h-4 w-4 text-blue-600" />;
+        return <Folder className="h-4 w-4 text-blue-600 dark:text-blue-400" />;
       case 'file':
-        return <File className="h-4 w-4 text-gray-600" />;
+        return <File className="h-4 w-4 text-muted-foreground" />;
       case 'symlink':
-        return <Link className="h-4 w-4 text-purple-600" />;
+        return <Link className="h-4 w-4 text-purple-600 dark:text-purple-400" />;
       default:
-        return <File className="h-4 w-4 text-gray-600" />;
+        return <File className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-gray-200 px-6 py-4">
+      <header className="border-b border-border px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <h1 className="text-xl font-semibold text-gray-900">YAGD</h1>
-            <div className="flex items-center space-x-1 text-sm text-gray-600">
+            <h1 className="text-xl font-semibold text-foreground">YAGD</h1>
+            <div className="flex items-center space-x-1 text-sm text-muted-foreground">
               {loaderData.path.map((segment, index) => (
                 <div key={index} className="flex items-center">
                   {index > 0 && <span className="mx-1">/</span>}
-                  <span className={index === loaderData.path.length - 1 ? "font-medium" : ""}>
+                  <span className={index === loaderData.path.length - 1 ? "font-medium text-foreground" : ""}>
                     {segment}
                   </span>
                 </div>
@@ -125,26 +126,19 @@ export default function Index() {
           
           <div className="flex items-center space-x-2">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search in Drive"
                 className="w-64 pl-9"
               />
             </div>
-            
-            <Button variant="outline" size="icon">
-              <Grid3X3 className="h-4 w-4" />
-            </Button>
-            
-            <Button variant="outline" size="icon">
-              <List className="h-4 w-4" />
-            </Button>
+            <ThemeToggle />
           </div>
         </div>
       </header>
 
       {/* Toolbar */}
-      <div className="border-b border-gray-200 px-6 py-3">
+      <div className="border-b border-border px-6 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Button>
@@ -180,7 +174,7 @@ export default function Index() {
           </TableHeader>
           <TableBody>
             {loaderData.entries.map((entry, index) => (
-              <TableRow key={index} className="hover:bg-gray-50">
+              <TableRow key={index} className="hover:bg-muted/50">
                 <TableCell className="font-medium">
                   <div className="flex items-center space-x-3">
                     {getFileIcon(entry)}
@@ -192,13 +186,13 @@ export default function Index() {
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="text-gray-600">
+                <TableCell className="text-muted-foreground">
                   {'ownerId' in entry ? entry.ownerId : '—'}
                 </TableCell>
-                <TableCell className="text-gray-600">
+                <TableCell className="text-muted-foreground">
                   {'lastModified' in entry && entry.lastModified ? formatDate(entry.lastModified) : '—'}
                 </TableCell>
-                <TableCell className="text-gray-600">
+                <TableCell className="text-muted-foreground">
                   {entry.type === 'file' ? formatBytes(entry.size) : '—'}
                 </TableCell>
                 <TableCell>
@@ -212,14 +206,6 @@ export default function Index() {
                       <DropdownMenuItem>
                         <Download className="h-4 w-4 mr-2" />
                         Download
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Share className="h-4 w-4 mr-2" />
-                        Share
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Star className="h-4 w-4 mr-2" />
-                        Add to starred
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem className="text-red-600">
@@ -237,9 +223,9 @@ export default function Index() {
 
       {/* Empty State for when no files */}
       {loaderData.entries.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 text-gray-500">
-          <Folder className="h-16 w-16 mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium mb-2">This folder is empty</h3>
+        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+          <Folder className="h-16 w-16 mb-4 text-muted-foreground/50" />
+          <h3 className="text-lg font-medium mb-2 text-foreground">This folder is empty</h3>
           <p className="text-sm mb-4">Upload files or create a new folder to get started</p>
           <div className="flex space-x-2">
             <Button>

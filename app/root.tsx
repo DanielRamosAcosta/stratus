@@ -30,6 +30,43 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                function getThemePreference() {
+                  const savedTheme = localStorage.getItem('theme');
+                  if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
+                    return savedTheme;
+                  }
+                  return 'system';
+                }
+                
+                function applyTheme(theme) {
+                  const root = document.documentElement;
+                  root.classList.remove('light', 'dark');
+                  
+                  if (theme === 'system') {
+                    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                    root.classList.add(systemTheme);
+                  } else {
+                    root.classList.add(theme);
+                  }
+                }
+                
+                const theme = getThemePreference();
+                applyTheme(theme);
+                
+                // Listen for system theme changes
+                if (theme === 'system') {
+                  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+                    applyTheme('system');
+                  });
+                }
+              })();
+            `,
+          }}
+        />
       </head>
       <body>
         {children}
