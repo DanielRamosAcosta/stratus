@@ -2,8 +2,7 @@
 import { redirect } from "react-router";
 import { data } from "@remix-run/node";
 import * as client from "openid-client";
-import { login, sessionStorage } from "~/services/auth.server";
-import { useLoaderData } from "@remix-run/react";
+import { sessionStorage } from "~/services/auth.server";
 
 // Import this from correct place for your route
 type LoginProps = {
@@ -57,7 +56,6 @@ export async function action({ request }: LoginActionArgs) {
     let code_challenge: string = await client.calculatePKCECodeChallenge(
       code_verifier
     );
-    let state!: string;
 
     let parameters: Record<string, string> = {
       redirect_uri,
@@ -66,25 +64,9 @@ export async function action({ request }: LoginActionArgs) {
       code_challenge_method: "S256",
     };
 
-    if (!config.serverMetadata().supportsPKCE()) {
-      console.log("PKCE is not supported by the server, using state.");
-      /**
-       * We cannot be sure the server supports PKCE so we're going to use state too.
-       * Use of PKCE is backwards compatible even if the AS doesn't support it which
-       * is why we're using it regardless. Like PKCE, random state must be generated
-       * for every redirect to the authorization_endpoint.
-       */
-      state = client.randomState();
-      parameters.state = state;
-    } else {
-      console.log("PKCE is supported by the server, no need for state.");
-    }
-
     let redirectTo: URL = client.buildAuthorizationUrl(config, parameters);
 
     session.set("code_verifier", code_verifier);
-    session.set("state", state);
-    session.set("prueba", "prueba");
 
     return redirect(redirectTo.toString(), {
       headers: {
@@ -108,11 +90,7 @@ export async function action({ request }: LoginActionArgs) {
 // authenticated and redirect them to the dashboard
 export async function loader({ request }: LoginLoaderArgs) {
   let session = await sessionStorage.getSession(request.headers.get("cookie"));
-  let user = session.get("user");
-
-  // If the user is already authenticated redirect to the home page
-  if (user) return redirect("/");
-
-  // Otherwise return null to render the login page
+  let accessToken = session.get("access_token");
+  if (accessToken) return redirect("/");
   return data(null);
 }
