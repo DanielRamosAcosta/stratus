@@ -19,7 +19,9 @@ import {
   Trash2,
   Share,
   Star,
-  Command
+  Command,
+  ChevronUp,
+  ChevronDown
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -29,6 +31,15 @@ import {
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
 import { ThemeToggle } from "../components/theme-toggle";
+import { Tooltip } from "../components/ui/tooltip";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "../components/ui/breadcrumb";
 import {
   Table,
   TableBody,
@@ -68,22 +79,52 @@ type EntrySymlink = {
   name: string;
 };
 
+type PathSegment = {
+  id: string;
+  name: string;
+};
+
+type LoaderData = {
+  path: PathSegment[];
+  entries: (EntryDirectory | EntryFile | EntrySymlink)[];
+};
+
+type SortField = 'name' | 'lastModified';
+type SortOrder = 'asc' | 'desc';
+
 export default function Index() {
-  const loaderData = useLoaderData<typeof loader>();
+  const loaderData = useLoaderData<LoaderData>();
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const uploadButtonRef = useRef<HTMLButtonElement>(null);
+  const newFolderButtonRef = useRef<HTMLButtonElement>(null);
   const [isMac, setIsMac] = useState(false);
+  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
   // Detect if user is on Mac
   useEffect(() => {
     setIsMac(navigator.platform.toUpperCase().indexOf('MAC') >= 0);
   }, []);
 
-  // Add keyboard shortcut for Cmd+K (or Ctrl+K on Windows/Linux)
+  // Add keyboard shortcuts for Cmd+K (search), Cmd+U (upload), Cmd+N (new folder)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Search shortcut
       if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
         event.preventDefault();
         searchInputRef.current?.focus();
+      }
+      
+      // Upload shortcut
+      if ((event.metaKey || event.ctrlKey) && event.key === 'u') {
+        event.preventDefault();
+        uploadButtonRef.current?.click();
+      }
+      
+      // New folder shortcut
+      if ((event.metaKey || event.ctrlKey) && event.key === 'n') {
+        event.preventDefault();
+        newFolderButtonRef.current?.click();
       }
     };
 
@@ -93,6 +134,50 @@ export default function Index() {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      // Si ya estamos ordenando por este campo, cambiar el orden
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Si es un campo nuevo, empezar con orden ascendente
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="h-4 w-4 ml-1 text-muted-foreground" />;
+    }
+    return sortOrder === 'asc' 
+      ? <ChevronUp className="h-4 w-4 ml-1" />
+      : <ChevronDown className="h-4 w-4 ml-1" />;
+  };
+
+  // Función para ordenar las entradas
+  const sortedEntries = [...loaderData.entries].sort((a, b) => {
+    let valueA: string | Date;
+    let valueB: string | Date;
+
+    if (sortField === 'name') {
+      valueA = a.name.toLowerCase();
+      valueB = b.name.toLowerCase();
+    } else if (sortField === 'lastModified') {
+      valueA = 'lastModified' in a ? a.lastModified : new Date(0);
+      valueB = 'lastModified' in b ? b.lastModified : new Date(0);
+    } else {
+      return 0;
+    }
+
+    if (valueA < valueB) {
+      return sortOrder === 'asc' ? -1 : 1;
+    }
+    if (valueA > valueB) {
+      return sortOrder === 'asc' ? 1 : -1;
+    }
+    return 0;
+  });
 
   function formatBytes(bytes: number) {
     const units = ['B', 'kB', 'MB', 'GB', 'TB', 'PB'];
@@ -137,37 +222,54 @@ export default function Index() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <h1 className="text-xl font-semibold text-foreground">YAGD</h1>
-            <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-              {loaderData.path.map((segment, index) => (
-                <div key={index} className="flex items-center">
-                  {index > 0 && <span className="mx-1">/</span>}
-                  <span className={index === loaderData.path.length - 1 ? "font-medium text-foreground" : ""}>
-                    {segment}
-                  </span>
-                </div>
-              ))}
-            </div>
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/">Your Drive</BreadcrumbLink>
+                </BreadcrumbItem>
+                {loaderData.path.map((segment, index) => {
+                  // Build hierarchical path for navigation
+                  const pathToSegment = loaderData.path.slice(0, index + 1);
+                  const href = `/folder/${pathToSegment.map(p => p.id).join('/')}`;
+                  
+                  return [
+                    <BreadcrumbSeparator key={`sep-${segment.id}`} />,
+                    <BreadcrumbItem key={`item-${segment.id}`}>
+                      {index === loaderData.path.length - 1 ? (
+                        <BreadcrumbPage>{segment.name}</BreadcrumbPage>
+                      ) : (
+                        <BreadcrumbLink href={href}>
+                          {segment.name}
+                        </BreadcrumbLink>
+                      )}
+                    </BreadcrumbItem>
+                  ];
+                })}
+              </BreadcrumbList>
+            </Breadcrumb>
           </div>
           
           <div className="flex items-center space-x-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                ref={searchInputRef}
-                placeholder="Search in Drive"
-                className="w-64 pl-9 pr-12"
-              />
-              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-                {isMac ? (
-                  <>
-                    <Command className="h-3 w-3" />
-                    <span className="text-xs">K</span>
-                  </>
-                ) : (
-                  'Ctrl+K'
-                )}
-              </kbd>
-            </div>
+            <Tooltip content="Search files and folders" shortcut={isMac ? "⌘K" : "Ctrl+K"}>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  ref={searchInputRef}
+                  placeholder="Search in Drive"
+                  className="w-64 pl-9 pr-12"
+                />
+                <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                  {isMac ? (
+                    <>
+                      <Command className="h-3 w-3" />
+                      <span className="text-xs">K</span>
+                    </>
+                  ) : (
+                    'Ctrl+K'
+                  )}
+                </kbd>
+              </div>
+            </Tooltip>
             <ThemeToggle />
           </div>
         </div>
@@ -177,20 +279,27 @@ export default function Index() {
       <div className="border-b border-border px-6 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Button>
-              <Upload className="h-4 w-4 mr-2" />
-              Upload
-            </Button>
-            <Button variant="outline">
-              <FolderPlus className="h-4 w-4 mr-2" />
-              New Folder
-            </Button>
+            <Tooltip content="Upload files" shortcut={isMac ? "⌘U" : "Ctrl+U"}>
+              <Button ref={uploadButtonRef}>
+                <Upload className="h-4 w-4 mr-2" />
+                Upload
+              </Button>
+            </Tooltip>
+            <Tooltip content="Create new folder" shortcut={isMac ? "⌘N" : "Ctrl+N"}>
+              <Button ref={newFolderButtonRef} variant="outline">
+                <FolderPlus className="h-4 w-4 mr-2" />
+                New Folder
+              </Button>
+            </Tooltip>
           </div>
           
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm">
-              <ArrowUpDown className="h-4 w-4 mr-1" />
-              Sort
+            <Button variant="outline" size="icon">
+              <Grid3X3 className="h-4 w-4" />
+            </Button>
+            
+            <Button variant="outline" size="icon">
+              <List className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -201,15 +310,31 @@ export default function Index() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[50%]">Name</TableHead>
+              <TableHead className="w-[50%]">
+                <button 
+                  onClick={() => handleSort('name')}
+                  className="flex items-center hover:text-foreground transition-colors text-left font-medium"
+                >
+                  Name
+                  {getSortIcon('name')}
+                </button>
+              </TableHead>
               <TableHead>Owner</TableHead>
-              <TableHead>Last modified</TableHead>
+              <TableHead>
+                <button 
+                  onClick={() => handleSort('lastModified')}
+                  className="flex items-center hover:text-foreground transition-colors text-left font-medium"
+                >
+                  Last modified
+                  {getSortIcon('lastModified')}
+                </button>
+              </TableHead>
               <TableHead>File size</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loaderData.entries.map((entry, index) => (
+            {sortedEntries.map((entry, index) => (
               <TableRow key={index} className="hover:bg-muted/50">
                 <TableCell className="font-medium">
                   <div className="flex items-center space-x-3">
@@ -287,10 +412,15 @@ export async function loader({ request }: { request: Request }) {
 
   return data({
     path: [
-      "/",
-      "Documentos",
-      "Remix",
-    ],
+      {
+        id: "documentos",
+        name: "Documentos"
+      },
+      {
+        id: "remix",
+        name: "Remix"
+      }
+    ] satisfies PathSegment[],
     entries: [
       {
         type: "directory",
