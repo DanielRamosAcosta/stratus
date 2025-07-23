@@ -9,11 +9,11 @@ web:
   tlsKey: /etc/ssl/key.pem
 
 staticClients:
-- id: yagd
+- id: stratus
   redirectURIs:
   - 'http://localhost:5173/auth/callback'
   name: 'YAGD App'
-  secret: yagd-secret
+  secret: stratus-secret
 
 enablePasswordDB: true
 staticPasswords:

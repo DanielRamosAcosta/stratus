@@ -16,8 +16,8 @@ export const oidcInstance = async () => {
   if (!instance) {
     const config: client.Configuration = await client.discovery(
       new URL("https://localhost:5556/dex/.well-known/openid-configuration"),
-      "yagd",
-      "yagd-secret"
+      "stratus",
+      "stratus-secret"
     );
 
     const redirect_uri = "http://localhost:5173/auth/callback";
