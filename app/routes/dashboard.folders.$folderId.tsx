@@ -9,20 +9,16 @@ import {
   MoreVertical, 
   Upload, 
   FolderPlus, 
-  Search,
   Grid3X3,
   List,
   Download,
   Trash2,
-  Command,
   ChevronUp,
   ChevronDown,
   ArrowUpDown
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
 import { Badge } from "~/components/ui/badge";
-import { Tooltip } from "~/components/ui/tooltip";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -96,7 +92,6 @@ type SortOrder = 'asc' | 'desc';
 export default function FolderView() {
   const loaderData = useLoaderData<LoaderData>();
   const navigate = useNavigate();
-  const searchInputRef = useRef<HTMLInputElement>(null);
   const uploadButtonRef = useRef<HTMLButtonElement>(null);
   const newFolderButtonRef = useRef<HTMLButtonElement>(null);
   const [isMac, setIsMac] = useState(false);
@@ -108,15 +103,9 @@ export default function FolderView() {
     setIsMac(navigator.platform.toUpperCase().indexOf('MAC') >= 0);
   }, []);
 
-  // Add keyboard shortcuts
+  // Add keyboard shortcuts for upload and new folder
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Search shortcut
-      if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
-        event.preventDefault();
-        searchInputRef.current?.focus();
-      }
-      
       // Upload shortcut
       if ((event.metaKey || event.ctrlKey) && event.key === 'u') {
         event.preventDefault();
@@ -136,12 +125,6 @@ export default function FolderView() {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
-
-  const handleSearch = (query: string) => {
-    if (query.trim()) {
-      navigate(`/dashboard/search?query=${encodeURIComponent(query.trim())}`);
-    }
-  };
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -232,61 +215,31 @@ export default function FolderView() {
     <div className="flex flex-col h-screen">
       {/* Header */}
       <header className="border-b border-border px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbLink href="/dashboard/folders/root">My Drive</BreadcrumbLink>
-                </BreadcrumbItem>
-                {loaderData.path.map((segment, index) => {
-                  const pathToSegment = loaderData.path.slice(0, index + 1);
-                  const href = `/dashboard/folders/${pathToSegment[pathToSegment.length - 1].id}`;
-                  
-                  return [
-                    <BreadcrumbSeparator key={`sep-${segment.id}`} />,
-                    <BreadcrumbItem key={`item-${segment.id}`}>
-                      {index === loaderData.path.length - 1 ? (
-                        <BreadcrumbPage>{segment.name}</BreadcrumbPage>
-                      ) : (
-                        <BreadcrumbLink href={href}>
-                          {segment.name}
-                        </BreadcrumbLink>
-                      )}
-                    </BreadcrumbItem>
-                  ];
-                })}
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Tooltip content="Search files and folders" shortcut={isMac ? "⌘K" : "Ctrl+K"}>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  ref={searchInputRef}
-                  placeholder="Search in Drive"
-                  className="w-64 pl-9 pr-12"
-                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                    if (e.key === 'Enter') {
-                      handleSearch(e.currentTarget.value);
-                    }
-                  }}
-                />
-                <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-                  {isMac ? (
-                    <>
-                      <Command className="h-3 w-3" />
-                      <span className="text-xs">K</span>
-                    </>
-                  ) : (
-                    'Ctrl+K'
-                  )}
-                </kbd>
-              </div>
-            </Tooltip>
-          </div>
+        <div className="flex items-center">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/dashboard/folders/root">My Drive</BreadcrumbLink>
+              </BreadcrumbItem>
+              {loaderData.path.map((segment, index) => {
+                const pathToSegment = loaderData.path.slice(0, index + 1);
+                const href = `/dashboard/folders/${pathToSegment[pathToSegment.length - 1].id}`;
+                
+                return [
+                  <BreadcrumbSeparator key={`sep-${segment.id}`} />,
+                  <BreadcrumbItem key={`item-${segment.id}`}>
+                    {index === loaderData.path.length - 1 ? (
+                      <BreadcrumbPage>{segment.name}</BreadcrumbPage>
+                    ) : (
+                      <BreadcrumbLink href={href}>
+                        {segment.name}
+                      </BreadcrumbLink>
+                    )}
+                  </BreadcrumbItem>
+                ];
+              })}
+            </BreadcrumbList>
+          </Breadcrumb>
         </div>
       </header>
 
@@ -294,18 +247,14 @@ export default function FolderView() {
       <div className="border-b border-border px-6 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Tooltip content="Upload files" shortcut={isMac ? "⌘U" : "Ctrl+U"}>
-              <Button ref={uploadButtonRef}>
-                <Upload className="h-4 w-4 mr-2" />
-                Upload
-              </Button>
-            </Tooltip>
-            <Tooltip content="Create new folder" shortcut={isMac ? "⌘N" : "Ctrl+N"}>
-              <Button ref={newFolderButtonRef} variant="outline">
-                <FolderPlus className="h-4 w-4 mr-2" />
-                New Folder
-              </Button>
-            </Tooltip>
+            <Button ref={uploadButtonRef}>
+              <Upload className="h-4 w-4 mr-2" />
+              Upload
+            </Button>
+            <Button ref={newFolderButtonRef} variant="outline">
+              <FolderPlus className="h-4 w-4 mr-2" />
+              New Folder
+            </Button>
           </div>
           
           <div className="flex items-center space-x-2">
