@@ -32,7 +32,7 @@ export default function Component({ actionData }: LoginProps) {
       
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-foreground">YAGD</h1>
+          <h1 className="text-3xl font-bold text-foreground">Stratus</h1>
           <p className="mt-2 text-muted-foreground">Yet Another Google Drive</p>
         </div>
 

@@ -12,7 +12,7 @@ staticClients:
 - id: stratus
   redirectURIs:
   - 'http://localhost:5173/auth/callback'
-  name: 'YAGD App'
+  name: 'Stratus App'
   secret: stratus-secret
 
 enablePasswordDB: true
