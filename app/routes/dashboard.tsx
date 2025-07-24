@@ -13,6 +13,18 @@ import {
 import { ThemeToggle } from "../components/theme-toggle";
 import { Input } from "~/components/ui/input";
 import { useEffect, useRef, useState } from "react";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarProvider,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarTrigger,
+} from "~/components/ui/sidebar";
+import { AppSidebar } from "~/components/app-sidebar";
 
 const sidebarItems = [
   { id: "home", label: "Home", icon: Home, href: "/dashboard" },
@@ -71,55 +83,14 @@ export default function DashboardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Left Sidebar */}
-      <aside className="w-64 bg-muted/10 border-r border-border">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center space-x-3">
-              <img src="/logo.svg" alt="Stratus" className="h-8 w-8" />
-              <h1 className="text-xl font-semibold text-foreground">Stratus</h1>
-            </div>
-            <ThemeToggle />
-          </div>
-          
-          <nav className="space-y-2">
-            {sidebarItems.map((item) => {
-              const IconComponent = item.icon;
-              const isActive = isActiveItem(item);
-              const isDisabled = item.id !== "my-drive";
-              
-              return (
-                <NavLink
-                  key={item.id}
-                  to={item.href}
-                  className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
-                    isDisabled
-                      ? "text-muted-foreground/50 cursor-not-allowed"
-                      : isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                  }`}
-                  onClick={(e) => {
-                    if (isDisabled) {
-                      e.preventDefault();
-                    }
-                  }}
-                >
-                  <IconComponent className="h-5 w-5" />
-                  <span>{item.label}</span>
-                </NavLink>
-              );
-            })}
-          </nav>
-        </div>
-      </aside>
+    <SidebarProvider>
+      <AppSidebar></AppSidebar>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col">
+      <SidebarInset>
         {/* Top Search Bar */}
-        <header className="border-b border-border px-6 py-4 bg-background">
-          <div className="flex items-center justify-center">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <div className="flex flex-1 items-center justify-center">
             <form onSubmit={handleSearch} className="relative max-w-md w-full">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -144,10 +115,10 @@ export default function DashboardLayout() {
         </header>
 
         {/* Page Content */}
-        <div className="flex-1">
+        <div className="flex flex-1 flex-col gap-4 p-4">
           <Outlet />
         </div>
-      </main>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
