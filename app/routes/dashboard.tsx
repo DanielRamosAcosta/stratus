@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useLocation, useNavigate } from "@remix-run/react";
+import { Outlet, useLocation, useNavigate } from "@remix-run/react";
 import { 
   Home,
   HardDrive,
@@ -10,18 +10,11 @@ import {
   Search,
   Command
 } from "lucide-react";
-import { ThemeToggle } from "../components/theme-toggle";
 import { Input } from "~/components/ui/input";
 import { useEffect, useRef, useState } from "react";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
   SidebarProvider,
   SidebarInset,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
   SidebarTrigger,
 } from "~/components/ui/sidebar";
 import { AppSidebar } from "~/components/app-sidebar";

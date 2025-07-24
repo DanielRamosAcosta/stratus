@@ -1,12 +1,10 @@
 // app/routes/login.tsx or equivalent route file
 import { redirect } from "react-router";
 import { data } from "@remix-run/node";
-import * as client from "openid-client";
 import { sessionStorage } from "~/services/auth.server";
 import { oidcInstance } from "../services/oidc.server";
 
 import { Button } from "../components/ui/button";
-import { ThemeToggle } from "../components/theme-toggle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 
 // Import this from correct place for your route
@@ -41,10 +39,6 @@ export default function Component({ actionData }: LoginProps) {
 
       {/* Right side - Normal background with login card */}
       <div className="flex-1 bg-background flex items-center justify-center relative">
-        <div className="absolute top-4 right-4">
-          <ThemeToggle />
-        </div>
-        
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Log or Sign in</CardTitle>
