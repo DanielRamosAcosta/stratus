@@ -7,6 +7,7 @@ import { oidcInstance } from "../services/oidc.server";
 
 import { Button } from "../components/ui/button";
 import { ThemeToggle } from "../components/theme-toggle";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 
 // Import this from correct place for your route
 type LoginProps = {
@@ -25,28 +26,47 @@ type LoginLoaderArgs = {
 // the names we are going to use in the strategy
 export default function Component({ actionData }: LoginProps) {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="absolute top-4 right-4">
-        <ThemeToggle />
-      </div>
-      
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-foreground">Stratus</h1>
-          <p className="mt-2 text-muted-foreground">Yet Another Google Drive</p>
+    <div className="min-h-screen flex">
+      {/* Left side - Gray background with quote */}
+      <div className="flex-1 bg-muted/30 flex flex-col justify-end p-8">
+        <div className="max-w-md">
+          <blockquote className="text-sm text-muted-foreground leading-relaxed">
+            "On behalf of the future, I ask you of the past to leave us alone. You are not welcome among us. You have no sovereignty where we gather."
+          </blockquote>
+          <footer className="mt-4 text-xs text-muted-foreground">
+            <cite>John Perry Barlow, co-founder of the nonprofit Electronic Frontier Foundation</cite>
+          </footer>
         </div>
+      </div>
 
-        {actionData?.error ? (
-          <div className="bg-destructive/15 border border-destructive text-destructive px-4 py-3 rounded">
-            {actionData.error}
-          </div>
-        ) : null}
+      {/* Right side - Normal background with login card */}
+      <div className="flex-1 bg-background flex items-center justify-center relative">
+        <div className="absolute top-4 right-4">
+          <ThemeToggle />
+        </div>
+        
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">Log or Sign in</CardTitle>
+            <CardDescription>
+              Sign in with Dex
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent>
+            {actionData?.error ? (
+              <div className="bg-destructive/15 border border-destructive text-destructive px-4 py-3 rounded mb-4">
+                {actionData.error}
+              </div>
+            ) : null}
 
-        <form method="post" className="space-y-4">
-          <Button type="submit" className="w-full">
-            Sign In with Dex
-          </Button>
-        </form>
+            <form method="post">
+              <Button type="submit" className="w-full">
+                Sign in with Dex
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
