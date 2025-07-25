@@ -164,6 +164,7 @@ export default function FolderView() {
   // Add keyboard shortcuts for upload and new folder
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      console.log("Key pressed:", event.key);
       // Upload shortcut
       if ((event.metaKey || event.ctrlKey) && event.key === 'u') {
         event.preventDefault();
@@ -348,9 +349,13 @@ export default function FolderView() {
               <Upload className="h-4 w-4 mr-2" />
               Upload
             </Button>
-            <Button ref={newFolderButtonRef} variant="outline" onClick={handleNewFolderClick}>
-              <FolderPlus className="h-4 w-4 mr-2" />
+            <Button ref={newFolderButtonRef} variant="outline" onClick={handleNewFolderClick} className="flex items-center gap-2">
+              <FolderPlus className="h-4 w-4" />
               New Folder
+              <kbd className="hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                <ChevronUp className="h-2 w-2" />
+                N
+              </kbd>
             </Button>
           </div>
           
@@ -525,7 +530,7 @@ export default function FolderView() {
                 <>
                   <FolderPlus className="h-4 w-4 mr-2" />
                   Create
-                  <kbd className="hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                  <kbd className="hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border border-primary-foreground/20 bg-primary-foreground/10 px-1.5 font-mono text-[10px] font-medium text-primary-foreground/80">
                     ⏎
                   </kbd>
                 </>
