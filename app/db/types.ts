@@ -32,8 +32,16 @@ export type File = Selectable<FileTable>;
 export type NewFile = Insertable<FileTable>;
 export type FileUpdate = Updateable<FileTable>;
 
+export type ScanTable = {
+  id: string;
+  owner_id: string;
+  started_at: Date;
+  finished_at: Date;
+} 
+
 export interface Database {
   directories: DirectoryTable;
   files: FileTable;
   users: UserTable;
+  scans: ScanTable;
 }

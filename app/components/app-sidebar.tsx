@@ -29,7 +29,7 @@ const data = {
   user: {
     name: "Daniel Ramos",
     email: "danielramosacosta1@gmail.com",
-    avatar: "/avatars/shadcn.jpg",
+    avatar: "https://gravatar.com/avatar/107ec5a8eff9589aaf115587b8af2a49?size=256",
   },
   teams: [
     {
