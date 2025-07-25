@@ -52,7 +52,7 @@ export function NavMain() {
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton asChild tooltip="Home" className="flex-1">
-            <a href="/dashboard/folders/root">
+            <a href="/dashboard/folders/343cbdbd-2160-4e50-8e05-5ea20dfe0e24">
               <Home className="size-4" />
               <span>Home</span>
             </a>
@@ -62,7 +62,7 @@ export function NavMain() {
           <SidebarMenuItem>
             <div className="flex items-center">
               <SidebarMenuButton asChild tooltip="My Drive" className="flex-1">
-                <a href="/dashboard/folders/root">
+                <a href="/dashboard/folders/343cbdbd-2160-4e50-8e05-5ea20dfe0e24">
                   <HardDrive className="size-4" />
                   <span>My Drive</span>
                 </a>
@@ -94,7 +94,7 @@ export function NavMain() {
         </Collapsible>
         <SidebarMenuItem>
           <SidebarMenuButton asChild tooltip="Shared with me" className="flex-1">
-            <a href="/dashboard/folders/root">
+            <a href="/dashboard/folders/343cbdbd-2160-4e50-8e05-5ea20dfe0e24">
               <Users className="size-4" />
               <span>Shared with me</span>
             </a>

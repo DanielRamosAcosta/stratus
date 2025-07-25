@@ -155,6 +155,7 @@ export default function FolderView() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [isNewFolderDialogOpen, setIsNewFolderDialogOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
+  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
 
   // Detect if user is on Mac
   useEffect(() => {
@@ -189,6 +190,21 @@ export default function FolderView() {
         setIsNewFolderDialogOpen(false);
         setNewFolderName("");
       }
+      
+      // Navigate with Enter key when item is selected
+      if (event.key === 'Enter' && selectedEntryId && !isNewFolderDialogOpen) {
+        event.preventDefault();
+        const selectedEntry = loaderData.entries.find(entry => entry.id === selectedEntryId);
+        if (selectedEntry) {
+          handleEntryDoubleClick(selectedEntry);
+        }
+      }
+      
+      // Clear selection with Escape key
+      if (event.key === 'Escape' && selectedEntryId && !isNewFolderDialogOpen) {
+        event.preventDefault();
+        setSelectedEntryId(null);
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
@@ -196,7 +212,7 @@ export default function FolderView() {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isNewFolderDialogOpen]);
+  }, [isNewFolderDialogOpen, selectedEntryId, loaderData.entries]);
 
   // Handle folder creation response
   useEffect(() => {
@@ -303,10 +319,16 @@ export default function FolderView() {
   };
 
   const handleEntryClick = (entry: EntryDirectory | EntryFile | EntrySymlink) => {
+    // Single click selects the entry
+    setSelectedEntryId(entry.id);
+  };
+
+  const handleEntryDoubleClick = (entry: EntryDirectory | EntryFile | EntrySymlink) => {
+    // Double click navigates
     if (entry.type === 'directory') {
       navigate(`/dashboard/folders/${entry.id}`);
     }
-    // TODO: Handle file preview/download
+    // TODO: Handle file preview/download for files
   };
 
   return (
@@ -317,7 +339,7 @@ export default function FolderView() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink href="/dashboard/folders/root">My Drive</BreadcrumbLink>
+                <BreadcrumbLink href="/dashboard/folders/343cbdbd-2160-4e50-8e05-5ea20dfe0e24">My Drive</BreadcrumbLink>
               </BreadcrumbItem>
               {loaderData.path.map((segment, index) => {
                 const pathToSegment = loaderData.path.slice(0, index + 1);
@@ -372,8 +394,8 @@ export default function FolderView() {
       </div>
 
       {/* File List */}
-      <div className="flex-1 px-6 py-4 overflow-auto">
-        <Table>
+      <div className="flex-1 px-6 py-4 overflow-auto" onClick={() => setSelectedEntryId(null)}>
+        <Table onClick={(e) => e.stopPropagation()}>
           <TableHeader>
             <TableRow>
               <TableHead className="w-[50%]">
@@ -401,12 +423,16 @@ export default function FolderView() {
           </TableHeader>
           <TableBody>
             {sortedEntries.map((entry, index) => (
-              <TableRow key={entry.id || index} className="hover:bg-muted/50">
+              <TableRow 
+                key={entry.id || index} 
+                className={`hover:bg-muted/50 cursor-pointer ${
+                  selectedEntryId === entry.id ? 'bg-accent' : ''
+                }`}
+                onClick={() => handleEntryClick(entry)}
+                onDoubleClick={() => handleEntryDoubleClick(entry)}
+              >
                 <TableCell className="font-medium">
-                  <div 
-                    className="flex items-center space-x-3 cursor-pointer"
-                    onClick={() => handleEntryClick(entry)}
-                  >
+                  <div className="flex items-center space-x-3">
                     {getFileIcon(entry)}
                     <span>{entry.name}</span>
                     {entry.type === 'file' && (
@@ -428,7 +454,11 @@ export default function FolderView() {
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>

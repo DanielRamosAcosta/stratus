@@ -1,12 +1,5 @@
-import { Outlet, useLocation, useNavigate } from "@remix-run/react";
+import { Outlet, useNavigate } from "@remix-run/react";
 import { 
-  Home,
-  HardDrive,
-  Users,
-  Clock,
-  Star,
-  Trash2,
-  BarChart3,
   Search,
   Command
 } from "lucide-react";
@@ -19,18 +12,8 @@ import {
 } from "~/components/ui/sidebar";
 import { AppSidebar } from "~/components/app-sidebar";
 
-const sidebarItems = [
-  { id: "home", label: "Home", icon: Home, href: "/dashboard" },
-  { id: "my-drive", label: "My Drive", icon: HardDrive, href: "/dashboard/folders/root" },
-  { id: "shared", label: "Shared with me", icon: Users, href: "/dashboard/shared" },
-  { id: "recents", label: "Recents", icon: Clock, href: "/dashboard/recents" },
-  { id: "favourites", label: "Favourites", icon: Star, href: "/dashboard/favourites" },
-  { id: "trash", label: "Trash", icon: Trash2, href: "/dashboard/trash" },
-  { id: "usage", label: "Usage", icon: BarChart3, href: "/dashboard/usage" },
-];
 
 export default function DashboardLayout() {
-  const location = useLocation();
   const navigate = useNavigate();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [isMac, setIsMac] = useState(false);
@@ -64,15 +47,6 @@ export default function DashboardLayout() {
     if (query.trim()) {
       navigate(`/dashboard/search?query=${encodeURIComponent(query.trim())}`);
     }
-  };
-  
-  const isActiveItem = (item: typeof sidebarItems[0]) => {
-    // Special case for My Drive - should be active for all folder routes
-    if (item.id === "my-drive") {
-      return location.pathname.startsWith("/dashboard/folders");
-    }
-    // For other items, exact match
-    return location.pathname === item.href;
   };
 
   return (
