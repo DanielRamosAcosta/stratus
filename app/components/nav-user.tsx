@@ -1,5 +1,6 @@
 "use client";
 
+import { NavLink } from "@remix-run/react";
 import {
   BadgeCheck,
   Bell,
@@ -87,10 +88,12 @@ export function NavUser({
                 <Settings />
                 Settings
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Shield />
-                Administration
-              </DropdownMenuItem>
+              <NavLink to="/dashboard/administration">
+                <DropdownMenuItem>
+                  <Shield />
+                  Administration
+                </DropdownMenuItem>
+              </NavLink>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <form method="post" action="/auth/logout" className="w-full">

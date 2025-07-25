@@ -9,6 +9,7 @@ import {
   Clock,
   Star,
   Trash2,
+  Settings,
 } from "lucide-react";
 
 import {
@@ -26,6 +27,7 @@ import {
   SidebarMenuSubItem,
 } from "~/components/ui/sidebar";
 import { Separator } from "./ui/separator";
+import { NavLink } from "@remix-run/react";
 
 export function NavMain() {
   const item = {

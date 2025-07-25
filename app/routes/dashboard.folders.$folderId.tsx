@@ -43,6 +43,7 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { sessionStorage } from "~/services/auth.server";
+import { findChildrenDirectories, findDirectoryContents, getDirectoryPath } from "../db/DirectoryRepository";
 
 export const meta: MetaFunction = () => {
   return [
@@ -69,11 +70,14 @@ type EntryFile = {
   lastModified: Date;
 };
 
+
 type EntrySymlink = {
   type: "symlink";
   id: string;
   name: string;
 };
+
+type Entry = EntryDirectory | EntryFile | EntrySymlink;
 
 type PathSegment = {
   id: string;
@@ -376,91 +380,34 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   let accessToken = session.get("access_token");
   if (!accessToken) throw redirect("/login");
 
-  const folderId = params.folderId || 'root';
+  const {directories, files} = await findDirectoryContents(params.folderId || 'root');
+  const path = await getDirectoryPath(params.folderId || 'root');
 
-  // Mock data based on folder ID
-  const getFolderData = (id: string) => {
-    switch (id) {
-      case 'root':
-        return {
-          folderId: 'root',
-          path: [],
-          entries: [
-            {
-              type: "directory",
-              id: "documentos",
-              name: "Documentos",
-              ownerId: "dani",
-              lastModified: new Date("2023-10-01T12:00:00Z"),
-            } satisfies EntryDirectory,
-            {
-              type: "directory",
-              id: "imagenes",
-              name: "Imágenes",
-              ownerId: "dani",
-              lastModified: new Date("2023-09-15T10:30:00Z"),
-            } satisfies EntryDirectory,
-            {
-              type: "file",
-              id: "readme",
-              size: 1024,
-              mimeType: "text/plain",
-              name: "README.md",
-              ownerId: "dani",
-              lastModified: new Date("2023-10-01T12:00:00Z"),
-            } satisfies EntryFile,
-          ]
-        };
-      case 'documentos':
-        return {
-          folderId: 'documentos',
-          path: [{ id: 'documentos', name: 'Documentos' }],
-          entries: [
-            {
-              type: "directory",
-              id: "remix",
-              name: "Remix",
-              ownerId: "dani",
-              lastModified: new Date("2023-10-01T12:00:00Z"),
-            } satisfies EntryDirectory,
-            {
-              type: "file",
-              id: "report",
-              size: 2048,
-              mimeType: "application/pdf",
-              name: "Report.pdf",
-              ownerId: "dani",
-              lastModified: new Date("2023-09-28T14:20:00Z"),
-            } satisfies EntryFile,
-          ]
-        };
-      case 'remix':
-        return {
-          folderId: 'remix',
-          path: [
-            { id: 'documentos', name: 'Documentos' },
-            { id: 'remix', name: 'Remix' }
-          ],
-          entries: [
-            {
-              type: "file",
-              id: "package",
-              size: 512,
-              mimeType: "application/json",
-              name: "package.json",
-              ownerId: "dani",
-              lastModified: new Date("2023-10-01T12:00:00Z"),
-            } satisfies EntryFile,
-          ]
-        };
-      default:
-        return {
-          folderId: id,
-          path: [],
-          entries: []
-        };
-    }
-  };
+  const directoriesEntries = directories.map((dir): EntryDirectory => ({
+    type: "directory",
+    id: dir.id,
+    name: dir.name,
+    ownerId: "dani",
+    lastModified: new Date(),
+  }));
 
-  return data(getFolderData(folderId));
+  const fileEntries = files.map((file): EntryFile => ({
+    type: "file",
+    id: file.id,
+    name: file.name,
+    ownerId: "dani",
+    lastModified: new Date(),
+    size: 0,
+    mimeType: "text/plain",
+  }));
+
+  const entries: Entry[] = [...directoriesEntries, ...fileEntries];
+
+  console.log("Loaded entries for folder:", accessToken);
+
+  return data<LoaderData>({
+    folderId: params.folderId || 'root',
+    path,
+    entries: entries,
+  });
 }

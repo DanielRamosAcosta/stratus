@@ -7,5 +7,5 @@ export async function loader({ request }: { request: Request }) {
   if (!accessToken) throw redirect("/login");
   
   // Redirect to dashboard with root folder
-  throw redirect("/dashboard/folders/root");
+  throw redirect("/dashboard/folders/343cbdbd-2160-4e50-8e05-5ea20dfe0e24");
 }
