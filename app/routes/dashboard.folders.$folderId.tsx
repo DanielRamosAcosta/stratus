@@ -1,6 +1,6 @@
-import type { MetaFunction, LoaderFunctionArgs } from "@remix-run/node";
-import { data, redirect } from "@remix-run/node";
-import { useLoaderData, useNavigate } from "@remix-run/react";
+import type { MetaFunction, LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
+import { data, redirect, json } from "@remix-run/node";
+import { useLoaderData, useNavigate, useFetcher } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import { 
   Folder, 
@@ -15,10 +15,20 @@ import {
   Trash2,
   ChevronUp,
   ChevronDown,
-  ArrowUpDown
+  ArrowUpDown,
+  RefreshCw
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
+import { Input } from "~/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -43,7 +53,7 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { sessionStorage } from "~/services/auth.server";
-import { findChildrenDirectories, findDirectoryContents, getDirectoryPath } from "../db/DirectoryRepository";
+import { findChildrenDirectories, findDirectoryContents, getDirectoryPath, createDirectory } from "../db/DirectoryRepository";
 
 export const meta: MetaFunction = () => {
   return [
@@ -51,6 +61,41 @@ export const meta: MetaFunction = () => {
     { name: "description", content: "File storage and management" },
   ];
 };
+
+export async function action({ request, params }: ActionFunctionArgs) {
+  let session = await sessionStorage.getSession(request.headers.get("cookie"));
+  let accessToken = session.get("access_token");
+  if (!accessToken) throw redirect("/login");
+
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+
+  if (intent === "create_folder") {
+    const folderName = formData.get("folderName")?.toString();
+    const parentId = params.folderId || 'root';
+
+    if (!folderName || folderName.trim() === "") {
+      return json({ error: "Folder name is required" }, { status: 400 });
+    }
+
+    try {
+      const newDirectory = await createDirectory({
+        id: crypto.randomUUID(),
+        name: folderName.trim(),
+        owner_id: "CiQwOGE4Njg0Yi1kYjg4LTRiNzMtOTBhOS0zY2QxNjYxZjU0NjYSBWxvY2Fs", // TODO: Get from session
+        parent_id: parentId,
+        root: false,
+      });
+
+      return json({ success: true, directory: newDirectory });
+    } catch (error) {
+      console.error("Error creating directory:", error);
+      return json({ error: "Failed to create folder" }, { status: 500 });
+    }
+  }
+
+  return json({ error: "Invalid action" }, { status: 400 });
+}
 
 type EntryDirectory = {
   type: "directory";
@@ -93,14 +138,23 @@ type LoaderData = {
 type SortField = 'name' | 'lastModified';
 type SortOrder = 'asc' | 'desc';
 
+interface CreateFolderResponse {
+  success?: boolean;
+  error?: string;
+  directory?: any;
+}
+
 export default function FolderView() {
   const loaderData = useLoaderData<LoaderData>();
   const navigate = useNavigate();
+  const fetcher = useFetcher<CreateFolderResponse>();
   const uploadButtonRef = useRef<HTMLButtonElement>(null);
   const newFolderButtonRef = useRef<HTMLButtonElement>(null);
   const [isMac, setIsMac] = useState(false);
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [isNewFolderDialogOpen, setIsNewFolderDialogOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
 
   // Detect if user is on Mac
   useEffect(() => {
@@ -116,10 +170,23 @@ export default function FolderView() {
         uploadButtonRef.current?.click();
       }
       
-      // New folder shortcut
+      // New folder shortcut - Cmd/Ctrl+N
       if ((event.metaKey || event.ctrlKey) && event.key === 'n') {
         event.preventDefault();
-        newFolderButtonRef.current?.click();
+        setIsNewFolderDialogOpen(true);
+      }
+      
+      // Alt New folder shortcut - Alt+Shift+N
+      if (event.altKey && event.shiftKey && event.key === 'N') {
+        event.preventDefault();
+        setIsNewFolderDialogOpen(true);
+      }
+      
+      // Close dialog with Escape key
+      if (event.key === 'Escape' && isNewFolderDialogOpen) {
+        event.preventDefault();
+        setIsNewFolderDialogOpen(false);
+        setNewFolderName("");
       }
     };
 
@@ -128,7 +195,33 @@ export default function FolderView() {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [isNewFolderDialogOpen]);
+
+  // Handle folder creation response
+  useEffect(() => {
+    if (fetcher.data && fetcher.data.success) {
+      setIsNewFolderDialogOpen(false);
+      setNewFolderName("");
+      // Optionally refresh the page or reload data
+      window.location.reload();
+    }
+  }, [fetcher.data]);
+
+  const handleCreateFolder = () => {
+    if (newFolderName.trim()) {
+      fetcher.submit(
+        { 
+          intent: "create_folder", 
+          folderName: newFolderName.trim() 
+        },
+        { method: "post" }
+      );
+    }
+  };
+
+  const handleNewFolderClick = () => {
+    setIsNewFolderDialogOpen(true);
+  };
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -255,7 +348,7 @@ export default function FolderView() {
               <Upload className="h-4 w-4 mr-2" />
               Upload
             </Button>
-            <Button ref={newFolderButtonRef} variant="outline">
+            <Button ref={newFolderButtonRef} variant="outline" onClick={handleNewFolderClick}>
               <FolderPlus className="h-4 w-4 mr-2" />
               New Folder
             </Button>
@@ -371,6 +464,76 @@ export default function FolderView() {
           </div>
         )}
       </div>
+
+      {/* New Folder Dialog */}
+      <Dialog open={isNewFolderDialogOpen} onOpenChange={setIsNewFolderDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create New Folder</DialogTitle>
+            <DialogDescription>
+              Enter a name for the new folder. This will create a new folder in the current directory.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Input
+                id="folderName"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                placeholder="New folder"
+                className="col-span-4"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleCreateFolder();
+                  }
+                }}
+                autoFocus
+              />
+            </div>
+            {fetcher.data?.error && (
+              <div className="text-sm text-red-600 bg-red-50 dark:bg-red-950 p-2 rounded">
+                {fetcher.data.error}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsNewFolderDialogOpen(false);
+                setNewFolderName("");
+              }}
+              disabled={fetcher.state === "submitting"}
+              className="flex items-center gap-2"
+            >
+              Cancel
+              <kbd className="hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                Esc
+              </kbd>
+            </Button>
+            <Button
+              onClick={handleCreateFolder}
+              disabled={!newFolderName.trim() || fetcher.state === "submitting"}
+              className="flex items-center gap-2"
+            >
+              {fetcher.state === "submitting" ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <FolderPlus className="h-4 w-4 mr-2" />
+                  Create
+                  <kbd className="hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                    ⏎
+                  </kbd>
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

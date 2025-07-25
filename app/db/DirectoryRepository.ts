@@ -1,5 +1,12 @@
 import { db } from './database'
-import { Directory } from './types';
+import { Directory, NewDirectory } from './types';
+
+export async function createDirectory(newDirectory: NewDirectory) {
+  return await db.insertInto('directories')
+    .values(newDirectory)
+    .returningAll()
+    .executeTakeFirstOrThrow();
+}
 
 export async function findChildrenDirectories(id: string) {
   return await db.selectFrom('directories')
