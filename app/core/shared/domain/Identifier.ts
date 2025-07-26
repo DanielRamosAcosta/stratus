@@ -1,1 +1,1 @@
-export type Identifier<K, T> = T & { __type: K };
+export type Identifier<K, T = string> = T & { __type: K };

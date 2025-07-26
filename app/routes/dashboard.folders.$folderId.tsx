@@ -1,3 +1,4 @@
+import jwt from "jsonwebtoken";
 import type {
   MetaFunction,
   LoaderFunctionArgs,
@@ -33,6 +34,7 @@ import { EntryId } from "../core/shared/domain/EntryId";
 import { BtnCreateNewFolder } from "../components/btn-create-new-folder";
 import { RowEntryActions } from "../components/row-entry-actions";
 import { setTimeout } from "node:timers/promises";
+import { multiplex, protect } from "../core/shared/infrastructure/AuthenticatedFunctionArgs";
 
 export const meta: MetaFunction = () => {
   return [
@@ -41,34 +43,18 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export async function action({ request, params }: ActionFunctionArgs) {
-  let session = await sessionStorage.getSession(request.headers.get("cookie"));
-  let accessToken = session.get("access_token");
-  if (!accessToken) throw redirect("/login");
+export async function action(params: ActionFunctionArgs) {
+  const newArgs = await protect(params);
 
-  switch (request.method) {
-    case "DELETE": {
+  const handler = multiplex<typeof newArgs>({
+    DELETE: async ({ request, auth }) => {
       const formData = await request.formData();
-      const entryId = formData.get("entryId")?.toString();
-      if (!entryId) {
-        return json({ error: "Entry ID is required" }, { status: 400 });
-      }
+      const entryId = formData.get("entryId")?.toString() ?? "";
+      await moveToTrash({ id: entryId as EntryId, userId: auth.sub });
+    },
+  });
 
-      try {
-        await setTimeout(1000); // Simulate some processing delay
-        await moveToTrash({ id: entryId as EntryId });
-
-        return json({ success: true });
-      } catch (error) {
-        console.error("Error moving to trash:", error);
-        return json({ error: "Failed to move to trash" }, { status: 500 });
-      }
-    }
-    default: {
-      console.warn("Unsupported action method:", request.method);
-      return json({ error: "Unsupported action" }, { status: 405 });
-    }
-  }
+  return handler(newArgs);
 }
 
 type EntryDirectory = {
