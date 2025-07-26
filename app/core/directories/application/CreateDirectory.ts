@@ -1,9 +1,9 @@
-import { DirectoryId, randomDirectoryId } from "../../domain/DirectoryId";
+import { DirectoryId, randomDirectoryId } from "../domain/DirectoryId";
 import {
   createDirectoryDb,
   findDirectoryById,
-} from "../../../../db/DirectoryRepository";
-import { UserId } from "../../../users/domain/user";
+} from "../../../db/DirectoryRepository";
+import { UserId } from "../../users/domain/user";
 
 export const createDirectory = async ({
   id = randomDirectoryId(),

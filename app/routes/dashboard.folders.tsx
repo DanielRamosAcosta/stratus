@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createDirectory } from "../core/directories/application/handlers/CreateDirectoryHandler";
+import { createDirectory } from "../core/directories/application/CreateDirectory";
 import * as DirectoryId from "../core/directories/domain/DirectoryId";
 import { asyncFlow } from "../utils/asyncFlow";
 import {

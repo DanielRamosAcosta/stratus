@@ -25,7 +25,7 @@ import {
   findDirectoryContents,
   getDirectoryPath,
 } from "../db/DirectoryRepository";
-import { moveToTrash } from "../core/directories/application/handlers/MoveToTrashHandler";
+import { moveToTrash } from "../core/directories/application/MoveToTrash";
 import * as EntryId from "../core/shared/domain/EntryId";
 import { BtnCreateNewFolder } from "../components/btn-create-new-folder";
 import { RowEntryActions } from "../components/row-entry-actions";
