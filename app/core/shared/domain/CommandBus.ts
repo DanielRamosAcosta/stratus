@@ -9,6 +9,7 @@ export function randomCommandId(): CommandId {
 export const enum CommandType {
   CREATE_DIRECTORY = "CREATE_DIRECTORY",
   MOVE_TO_TRASH = "MOVE_TO_TRASH",
+  RESCAN = "RESCAN",
 }
 
 export type CommandPayload = {};

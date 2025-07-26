@@ -32,16 +32,22 @@ export type File = Selectable<FileTable>;
 export type NewFile = Insertable<FileTable>;
 export type FileUpdate = Updateable<FileTable>;
 
-export type ScanTable = {
+export type RescanTable = {
   id: string;
   owner_id: string;
   started_at: Date;
-  finished_at: Date;
-} 
+  finished_at: Date | null;
+  total_files: number;
+  processed_files: number;
+};
+
+export type Rescan = Selectable<RescanTable>;
+export type NewRescan = Insertable<RescanTable>;
+export type RescanUpdate = Updateable<RescanTable>;
 
 export interface Database {
   directories: DirectoryTable;
   files: FileTable;
   users: UserTable;
-  scans: ScanTable;
+  rescans: RescanTable;
 }
