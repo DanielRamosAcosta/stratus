@@ -7,10 +7,14 @@ import {
   useRouteError,
   Link,
   isRouteErrorResponse,
+  data,
+  useRouteLoaderData,
 } from "@remix-run/react";
-import type { LinksFunction } from "@remix-run/node";
+import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 
 import "./tailwind.css";
+import { ShortcutProvider } from "./providers/ShortcutProvider";
+import { isMac } from "./utils/isMac";
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -35,7 +39,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        {children}
+        <ShortcutProvider>{children}</ShortcutProvider>
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -73,3 +77,6 @@ export function ErrorBoundary() {
   }
 }
 
+export async function loader({ request }: LoaderFunctionArgs) {
+  return data({ isMac: isMac(request.headers.get("user-agent") || "") });
+}

@@ -67,6 +67,7 @@ import {
 import { createMoveToTrashCommand } from "../core/directories/application/handlers/MoveToTrashHandler";
 import { EntryId } from "../core/shared/domain/EntryId";
 import { BtnCreateNewFolder } from "../components/btn-create-new-folder";
+import { useState } from "react";
 
 export const meta: MetaFunction = () => {
   return [
@@ -240,7 +241,7 @@ export default function FolderView() {
   };
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col">
       {/* Header */}
       <header className="border-b border-border px-6 py-4">
         <div className="flex items-center">
@@ -283,7 +284,7 @@ export default function FolderView() {
               <Upload className="h-4 w-4 mr-2" />
               Upload
             </Button>
-            <BtnCreateNewFolder parentId={loaderData.folderId} />
+            <BtnCreateNewFolder parentId={loaderData.folderId}  />
           </div>
 
           <div className="flex items-center space-x-2">
