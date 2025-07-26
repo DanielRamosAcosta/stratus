@@ -17,8 +17,7 @@ staticClients:
 
 enablePasswordDB: true
 staticPasswords:
-- email: "john.doe@example.com"
-  # password is "password"
-  hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
-  username: "john.doe"
-  userID: "08a8684b-db88-4b73-90a9-3cd1661f5466"
+- email: "dani@example.com"
+  hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W" # "password"
+  username: "dani"
+  userID: "98b080b5-24e4-4b0f-979c-43a9c42e3c17"

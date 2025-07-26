@@ -1,5 +1,6 @@
 import { handleCreateDirectory } from "./directories/application/handlers/CreateDirectoryHandler";
 import { handleMoveToTrash } from "./directories/application/handlers/MoveToTrashHandler";
+import { commandStatus } from "./shared/deleteme";
 import {
   Command,
   CommandBus,
@@ -13,7 +14,17 @@ const handlers: Record<CommandType, CommandHandler<any>> = {
 };
 
 export async function handle(command: Command) {
-  await handlers[command.type](command);
+    commandStatus.finished = false; // Reset status before processing
+
+    handlers[command.type](command)
+    .catch((error) => {
+      console.error(`Error handling command ${command.type}:`, error);
+      throw error; // Re-throw to let the caller handle it
+    })
+    .finally(() => {
+      commandStatus.finished = true; // Set status to finished after processing
+      console.log(`Command ${command.id} finished processing`);
+    }); 
 }
 
 export const execute = (commandBus: CommandBus) => async (command: Command) => {

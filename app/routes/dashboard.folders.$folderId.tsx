@@ -86,14 +86,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
     }
 
     try {
+      const commandId = randomCommandId();
       await handle(createDirectoryCommand({
-        id: randomCommandId(),
+        id: commandId,
         directoryId: randomDirectoryId(),
         name: folderName.trim(),
         parentId,
       }))
 
-      return redirect(`/dashboard/folders/${parentId}`);
+      return redirect(`/dashboard/folders/${parentId}?commandId=${commandId}`);
     } catch (error) {
       console.error("Error creating directory:", error);
       return json({ error: "Failed to create folder" }, { status: 500 });
@@ -170,6 +171,7 @@ interface CreateFolderResponse {
   success?: boolean;
   error?: string;
   directory?: any;
+  commandId?: string;
 }
 
 export default function FolderView() {
@@ -184,6 +186,7 @@ export default function FolderView() {
   const [isNewFolderDialogOpen, setIsNewFolderDialogOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+  const [isPollingCommand, setIsPollingCommand] = useState(false);
 
   // Detect if user is on Mac
   useEffect(() => {
@@ -244,11 +247,37 @@ export default function FolderView() {
 
   // Handle folder creation response
   useEffect(() => {
-    if (fetcher.data && fetcher.data.success) {
-      setIsNewFolderDialogOpen(false);
-      setNewFolderName("");
-      // Optionally refresh the page or reload data
-      window.location.reload();
+    if (fetcher.data && fetcher.data.success && fetcher.data.commandId) {
+      // Start polling for command completion
+      const commandId = fetcher.data.commandId;
+      setIsPollingCommand(true);
+      
+      const pollCommand = async () => {
+        try {
+          const response = await fetch(`/meta/commands/${commandId}`);
+          const result = await response.json();
+          
+          if (result.finished) {
+            setIsPollingCommand(false);
+            setIsNewFolderDialogOpen(false);
+            setNewFolderName("");
+            window.location.reload();
+          } else {
+            // Continue polling after 1 second
+            setTimeout(pollCommand, 1000);
+          }
+        } catch (error) {
+          console.error("Error polling command:", error);
+          // Fallback: close dialog after error
+          setIsPollingCommand(false);
+          setIsNewFolderDialogOpen(false);
+          setNewFolderName("");
+          window.location.reload();
+        }
+      };
+      
+      // Start polling after a short delay
+      setTimeout(pollCommand, 500);
     }
   }, [fetcher.data]);
 
@@ -574,7 +603,7 @@ export default function FolderView() {
                 setIsNewFolderDialogOpen(false);
                 setNewFolderName("");
               }}
-              disabled={fetcher.state === "submitting"}
+              disabled={fetcher.state === "submitting" || isPollingCommand}
               className="flex items-center gap-2"
             >
               Cancel
@@ -584,13 +613,13 @@ export default function FolderView() {
             </Button>
             <Button
               onClick={handleCreateFolder}
-              disabled={!newFolderName.trim() || fetcher.state === "submitting"}
+              disabled={!newFolderName.trim() || fetcher.state === "submitting" || isPollingCommand}
               className="flex items-center gap-2"
             >
-              {fetcher.state === "submitting" ? (
+              {(fetcher.state === "submitting" || isPollingCommand) ? (
                 <>
                   <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Creating...
+                  {fetcher.state === "submitting" ? "Creating..." : "Processing..."}
                 </>
               ) : (
                 <>
@@ -613,6 +642,26 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   let session = await sessionStorage.getSession(request.headers.get("cookie"));
   let accessToken = session.get("access_token");
   if (!accessToken) throw redirect("/login");
+
+  if (params.commandId) {
+    console.log("I should wait for command:", params.commandId);
+    while (true) {
+      const response = await fetch(`/meta/commands/${params.commandId}`);
+      const result = await response.json();
+      
+      if (result.finished) {
+        console.log("Command finished:", params.commandId);
+        break;
+      } else {
+        console.log("Command still running, waiting...");
+      }
+      
+      // Wait for 1 second before checking again
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    console.log("Command completed:", params.commandId);
+    // After command completion, redirect to the folder
+  }
 
   const {directories, files} = await findDirectoryContents(params.folderId || 'root');
   const path = await getDirectoryPath(params.folderId || 'root');
