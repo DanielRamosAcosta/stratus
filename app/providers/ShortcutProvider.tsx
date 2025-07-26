@@ -23,6 +23,12 @@ export type PlatformShortcut = {
   other: Shortcut;
 }
 
+export function isPlatformShortcut(
+  shortcut: PlatformShortcut | Shortcut
+): shortcut is PlatformShortcut {
+  return (shortcut as PlatformShortcut).mac !== undefined && (shortcut as PlatformShortcut).other !== undefined;
+}
+
 type ShortcutContextValue = {
   register(shortcut: PlatformShortcut, cb: () => void): void
   unregister(cb: () => void): void

@@ -183,8 +183,6 @@ export default function FolderView() {
     console.log("Moving to trash:", entryId);
   };
 
-  const handleNewFolderClick = () => {};
-
   // Sort entries
   const sortedEntries = loaderData.entries;
 
@@ -315,7 +313,7 @@ export default function FolderView() {
             {sortedEntries.map((entry, index) => (
               <TableRow
                 key={entry.id || index}
-                className="hover:bg-muted/50 cursor-pointer"
+                className="hover:bg-muted/50"
                 onDoubleClick={() => handleEntryDoubleClick(entry)}
               >
                 <TableCell className="font-medium">
