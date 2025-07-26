@@ -85,7 +85,6 @@ export async function action({ request }: LoginActionArgs) {
       },
     });
   } catch (error) {
-    console.log("Login action error:", error);
     session.flash("error", "Invalid username/password");
 
     // Redirect back to the login page with errors.

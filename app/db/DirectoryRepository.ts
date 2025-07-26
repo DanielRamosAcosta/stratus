@@ -1,7 +1,7 @@
 import { db } from './database'
 import { Directory, NewDirectory } from './types';
 
-export async function createDirectory(newDirectory: NewDirectory) {
+export async function createDirectoryDb(newDirectory: NewDirectory) {
   return await db.insertInto('directories')
     .values(newDirectory)
     .returningAll()

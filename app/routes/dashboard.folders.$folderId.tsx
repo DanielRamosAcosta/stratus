@@ -5,14 +5,7 @@ import type {
 } from "@remix-run/node";
 import { data, redirect, json } from "@remix-run/node";
 import { useLoaderData, useNavigate } from "@remix-run/react";
-import {
-  Folder,
-  File,
-  Link,
-  Upload,
-  Grid3X3,
-  List,
-} from "lucide-react";
+import { Folder, File, Link, Upload, Grid3X3, List } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
   Breadcrumb,
@@ -35,8 +28,7 @@ import {
   findDirectoryContents,
   getDirectoryPath,
 } from "../db/DirectoryRepository";
-import { randomCommandId } from "../core/shared/domain/CommandBus";
-import { createMoveToTrashCommand, handleMoveToTrash } from "../core/directories/application/handlers/MoveToTrashHandler";
+import { moveToTrash } from "../core/directories/application/handlers/MoveToTrashHandler";
 import { EntryId } from "../core/shared/domain/EntryId";
 import { BtnCreateNewFolder } from "../components/btn-create-new-folder";
 import { RowEntryActions } from "../components/row-entry-actions";
@@ -64,12 +56,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
       try {
         await setTimeout(1000); // Simulate some processing delay
-        await handleMoveToTrash(
-          createMoveToTrashCommand({
-            id: randomCommandId(),
-            entryId: entryId as EntryId,
-          })
-        );
+        await moveToTrash({ id: entryId as EntryId });
 
         return json({ success: true });
       } catch (error) {
@@ -228,7 +215,7 @@ export default function FolderView() {
               <Upload className="h-4 w-4 mr-2" />
               Upload
             </Button>
-            <BtnCreateNewFolder parentId={loaderData.folderId}  />
+            <BtnCreateNewFolder parentId={loaderData.folderId} />
           </div>
 
           <div className="flex items-center space-x-2">
@@ -244,7 +231,7 @@ export default function FolderView() {
       </div>
 
       {/* File List */}
-      <div className="flex-1 px-6 py-4 overflow-auto">
+      <div className="flex-1 px-4 py-4 overflow-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -259,7 +246,7 @@ export default function FolderView() {
             {sortedEntries.map((entry, index) => (
               <TableRow
                 key={entry.id || index}
-                className="hover:bg-muted/50"
+                className="hover:bg-muted/50 select-none"
                 onDoubleClick={() => handleEntryDoubleClick(entry)}
               >
                 <TableCell className="font-medium">
@@ -302,7 +289,10 @@ export default function FolderView() {
                 <Upload className="h-4 w-4 mr-2" />
                 Upload files
               </Button>
-              <BtnCreateNewFolder parentId={loaderData.folderId} disableShortcut />
+              <BtnCreateNewFolder
+                parentId={loaderData.folderId}
+                disableShortcut
+              />
             </div>
           </div>
         )}
@@ -344,8 +334,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   );
 
   const entries: Entry[] = [...directoriesEntries, ...fileEntries];
-
-  console.log("Loaded entries for folder:", accessToken);
 
   return data<LoaderData>({
     folderId: params.folderId || "root",

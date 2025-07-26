@@ -1,9 +1,5 @@
-import { useEffect } from "react";
-import {
-  useFetcher,
-  useLoaderData,
-  useRevalidator,
-} from "@remix-run/react";
+import { useEffect, useState } from "react";
+import { useFetcher, useLoaderData, useRevalidator } from "@remix-run/react";
 import { data } from "@remix-run/node";
 import { Button } from "~/components/ui/button";
 import {
@@ -17,19 +13,25 @@ import { RefreshCw, Database, HardDrive } from "lucide-react";
 import { findLatestRescan } from "../db/RescanRepository";
 import { isCompleted, isError, isRunning } from "../core/rescans/domain/rescan";
 
-
 export default function AdministrationPage() {
   const { rescan } = useLoaderData<typeof loader>();
   const { revalidate } = useRevalidator();
 
-  console.log("Rescan status:", rescan);
+  console.log("Rescan status:", rescan?.type);
 
   const fetcher = useFetcher<void>();
 
+  const isSubmitting = fetcher.state === "submitting";
+
+  console.log("isSubmitting, ", isSubmitting);
+
   useEffect(() => {
+    const fetcherFinished = fetcher.state === "idle" && fetcher.data;
+    if (!isRunning(rescan) && !fetcherFinished) return;
+
     const interval = setInterval(revalidate, 1000);
     return () => clearInterval(interval);
-  }, [revalidate, rescan]);
+  }, [revalidate, rescan, isSubmitting]);
 
   return (
     <div className="space-y-6 p-8">
@@ -76,11 +78,9 @@ export default function AdministrationPage() {
                         <Database className="h-4 w-4" />
                         Scanning...
                       </span>
-                      {rescan.processedFiles && rescan.totalFiles && (
-                        <span className="text-muted-foreground">
-                          {rescan.processedFiles} / {rescan.totalFiles}
-                        </span>
-                      )}
+                      <span className="text-muted-foreground">
+                        {rescan.processedFiles} / {rescan.totalFiles}
+                      </span>
                     </div>
                     <div className="w-full bg-secondary rounded-full h-2">
                       <div
@@ -160,7 +160,12 @@ export default function AdministrationPage() {
                       <div className="flex items-center justify-end text-xs text-green-600 dark:text-green-400 gap-1">
                         <span>Duration:</span>
                         <span className="font-medium">
-                          {Math.round((rescan.finishedAt.getTime() - rescan.startedAt.getTime()) / 1000)}s
+                          {Math.round(
+                            (rescan.finishedAt.getTime() -
+                              rescan.startedAt.getTime()) /
+                              1000
+                          )}
+                          s
                         </span>
                       </div>
                     </div>
@@ -170,23 +175,32 @@ export default function AdministrationPage() {
             )}
 
             <fetcher.Form method="post" action="rescan">
-              <Button disabled={isRunning(rescan)} className="w-full sm:w-auto">
+              <Button
+                disabled={isRunning(rescan) || isSubmitting}
+                className="w-full sm:w-auto"
+              >
                 {isRunning(rescan) && (
                   <>
                     <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                     Scanning...
                   </>
                 )}
-                {isError(rescan) && (
+                {(isError(rescan) && !isSubmitting) && (
                   <>
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Retry Rescan
                   </>
                 )}
-                {rescan == null || isCompleted(rescan) && (
+                {((rescan == null || isCompleted(rescan)) && !isSubmitting) && (
                   <>
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Rescan Files
+                  </>
+                )}
+                {isSubmitting && (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    Starting Rescan...
                   </>
                 )}
               </Button>
@@ -226,6 +240,5 @@ export async function loader() {
 
   const rescan = await findLatestRescan(ownerId);
 
-  console.log("Am I rescanning?");
   return data({ rescan });
 }

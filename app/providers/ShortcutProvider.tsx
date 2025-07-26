@@ -39,7 +39,6 @@ export const ShortcutProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const { isMac } = useIsMac();
   const registrars = useRef<Array<[PlatformShortcut, () => void]>>([]);
-  console.log("isMac", isMac);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -62,7 +61,6 @@ export const ShortcutProvider: React.FC<{ children: React.ReactNode }> = ({
       matchedRegistrars.forEach((matchedRegistrar) => {
         e.preventDefault();
         const [shortcut, cb] = matchedRegistrar;
-        console.log("Shortcut matched:", shortcut);
         cb();
       })
     };
@@ -76,13 +74,9 @@ export const ShortcutProvider: React.FC<{ children: React.ReactNode }> = ({
   const value: ShortcutContextValue = {
     register(shortcut, cb) {
       registrars.current.push([shortcut, cb]);
-      console.log("Registered shortcut", shortcut, "for", isMac ? "Mac" : "Other");
-      console.log("Current registrars:", registrars.current);
     },
     unregister(cb) {
-      console.log("Unregistered shortcut for callback", cb);
       registrars.current = registrars.current.filter(([_, registeredCb]) => registeredCb !== cb);
-      console.log("Current registrars after unregister:", registrars.current);
     },
   };
 
@@ -106,7 +100,6 @@ export function useShortcut(shortcut: PlatformShortcut, cb: () => void, dependen
 
     return () => {
       context.unregister(cb);
-      console.log("Unregistered shortcut", shortcut, "for", isMac ? "Mac" : "Other");
     }
   }, dependencies);
 

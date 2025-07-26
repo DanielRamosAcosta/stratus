@@ -30,8 +30,6 @@ export function RowEntryActions({
 
   const isSubmitting = fetcher.state === "submitting";
 
-  console.log("RowEntryActions", { entryId, isSelected, open });
-
   useShortcut(shortcut, () => {
     if (open) {
       fetcher.submit(
