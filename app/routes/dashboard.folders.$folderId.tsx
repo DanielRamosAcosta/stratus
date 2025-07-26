@@ -100,10 +100,6 @@ export default function FolderView() {
   const loaderData = useLoaderData<LoaderData>();
   const navigate = useNavigate();
 
-  const handleMoveToTrash = (entryId: string) => {
-    console.log("Moving to trash:", entryId);
-  };
-
   // Sort entries
   const sortedEntries = loaderData.entries;
 
@@ -145,9 +141,6 @@ export default function FolderView() {
     }
   };
 
-  const handleEntryClick = () => {
-    // Single click selects the entry
-  };
 
   const handleEntryDoubleClick = (
     entry: EntryDirectory | EntryFile | EntrySymlink
