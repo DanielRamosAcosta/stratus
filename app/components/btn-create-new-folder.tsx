@@ -8,14 +8,16 @@ import {
   DialogDescription,
   DialogOverlay,
 } from "~/components/ui/dialog";
-import { FolderPlus, ChevronUp, Command } from "lucide-react";
+import { FolderPlus, ChevronUp, Command, RefreshCw } from "lucide-react";
 import { Button } from "./ui/button";
 import { DialogHeader, DialogFooter, DialogPortal } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { PlatformShortcut, useShortcut } from "../providers/ShortcutProvider";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { platform } from "os";
 import { Shortcut } from "./shortcut";
+import { Form, useFetcher, useNavigation } from "@remix-run/react";
+import { action } from "../routes/dashboard.folders";
 
 type CreateNewFolderProps = {
   parentId: string;
@@ -23,16 +25,24 @@ type CreateNewFolderProps = {
 
 export function BtnCreateNewFolder({ parentId }: CreateNewFolderProps) {
   const [open, setOpen] = useState(false);
+  const fetcher = useFetcher<typeof action>();
 
   const shortcut: PlatformShortcut = {
     mac: { ctrl: true, key: "n" },
     other: { ctrl: true, key: "n" },
   };
 
+  const isSubmitting = fetcher.state === "submitting";
+
   useShortcut(shortcut, () => {
-    console.log("Create new folder shortcut triggered");
     setOpen(true);
   });
+
+  useEffect(() => {
+    if (fetcher.state === 'idle' && fetcher.data?.ok) {
+      setOpen(false);
+    }
+  }, [fetcher]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -44,12 +54,9 @@ export function BtnCreateNewFolder({ parentId }: CreateNewFolderProps) {
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
-        <form
+        <fetcher.Form
           method="post"
           action="/dashboard/folders"
-          onSubmit={(e) => {
-            console.log("Creating new folder");
-          }}
         >
           <DialogHeader>
             <DialogTitle>Create New Folder</DialogTitle>
@@ -79,17 +86,36 @@ export function BtnCreateNewFolder({ parentId }: CreateNewFolderProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              disabled={isSubmitting}
+              type="button"
+              onClick={() => setOpen(false)}
+            >
               Cancel
               <Shortcut shortcut={{ key: "Escape" }} />
             </Button>
-            <Button className="flex items-center gap-2" type="submit">
-              <FolderPlus className="h-4 w-4 mr-2" />
-              Create
-              <Shortcut shortcut={{ key: "Enter" }} />
+            <Button 
+              className="flex items-center gap-2" 
+              type="submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <FolderPlus className="h-4 w-4 mr-2" />
+                  Create
+                  <Shortcut shortcut={{ key: "Enter" }} />
+                </>
+              )}
             </Button>
           </DialogFooter>
-        </form>
+        </fetcher.Form>
       </DialogContent>
     </Dialog>
   );

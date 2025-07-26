@@ -1,4 +1,4 @@
-import { ActionFunctionArgs, redirect } from "@remix-run/node";
+import { ActionFunctionArgs, data, redirect } from "@remix-run/node";
 import { sessionStorage } from "~/services/auth.server";
 import {
   createDirectoryCommand,
@@ -9,6 +9,7 @@ import {
   DirectoryId,
   randomDirectoryId,
 } from "../core/directories/domain/DirectoryId";
+import { setTimeout } from "timers/promises";
 
 export async function action({ request, params }: ActionFunctionArgs) {
   console.log("Received action:", { request, params });
@@ -20,6 +21,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   const formData = await request.formData();
   console.log("url", formData);
+  await setTimeout(4000); // Simulate a delay for the action
 
   await handleCreateDirectory(
     createDirectoryCommand({
@@ -34,5 +36,5 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   const finalUrl = `/dashboard/folders/${formData.get("parentId")}`;
 
-  return redirect(finalUrl);
+  return data({ ok: true, });
 }
