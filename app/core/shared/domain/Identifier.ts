@@ -1,0 +1,1 @@
+export type Identifier<K, T> = T & { __type: K };

@@ -30,6 +30,19 @@ export async function findDirectoryContents(id: string) {
   return { directories, files };
 }
 
+export async function findDirectoryById(id: string) {
+  return await db.selectFrom('directories')
+    .where('id', '=', id)
+    .selectAll()
+    .executeTakeFirst();
+}
+
+export async function deleteDirectory(id: string) {
+  return await db.deleteFrom('directories')
+    .where('id', '=', id)
+    .execute();
+}
+
 export async function getDirectoryPath(id: string) {
   const path: Directory[] = [];
   let currentId: string | null = id;

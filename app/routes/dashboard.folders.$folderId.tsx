@@ -54,6 +54,12 @@ import {
 } from "~/components/ui/dropdown-menu";
 import { sessionStorage } from "~/services/auth.server";
 import { findChildrenDirectories, findDirectoryContents, getDirectoryPath, createDirectory } from "../db/DirectoryRepository";
+import { handle } from "../core/entrypoint";
+import { createDirectoryCommand } from "../core/directories/application/handlers/CreateDirectoryHandler";
+import { randomCommandId } from "../core/shared/domain/CommandBus";
+import { DirectoryId, randomDirectoryId } from "../core/directories/domain/DirectoryId";
+import { createMoveToTrashCommand } from "../core/directories/application/handlers/MoveToTrashHandler";
+import { EntryId } from "../core/shared/domain/EntryId";
 
 export const meta: MetaFunction = () => {
   return [
@@ -63,6 +69,7 @@ export const meta: MetaFunction = () => {
 };
 
 export async function action({ request, params }: ActionFunctionArgs) {
+  console.log("Received action:", { request, params });
   let session = await sessionStorage.getSession(request.headers.get("cookie"));
   let accessToken = session.get("access_token");
   if (!accessToken) throw redirect("/login");
@@ -72,25 +79,46 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   if (intent === "create_folder") {
     const folderName = formData.get("folderName")?.toString();
-    const parentId = params.folderId || 'root';
+    const parentId = (params.folderId || '343cbdbd-2160-4e50-8e05-5ea20dfe0e24') as DirectoryId;
 
     if (!folderName || folderName.trim() === "") {
       return json({ error: "Folder name is required" }, { status: 400 });
     }
 
     try {
-      const newDirectory = await createDirectory({
-        id: crypto.randomUUID(),
+      await handle(createDirectoryCommand({
+        id: randomCommandId(),
+        directoryId: randomDirectoryId(),
         name: folderName.trim(),
-        owner_id: "CiQwOGE4Njg0Yi1kYjg4LTRiNzMtOTBhOS0zY2QxNjYxZjU0NjYSBWxvY2Fs", // TODO: Get from session
-        parent_id: parentId,
-        root: false,
-      });
+        parentId,
+      }))
 
-      return json({ success: true, directory: newDirectory });
+      return redirect(`/dashboard/folders/${parentId}`);
     } catch (error) {
       console.error("Error creating directory:", error);
       return json({ error: "Failed to create folder" }, { status: 500 });
+    }
+  }
+
+  if (intent === "move_to_trash") {
+    console.log("Intent to move to trash received");
+    const entryId = formData.get("entryId")?.toString();
+    if (!entryId) {
+      return json({ error: "Entry ID is required" }, { status: 400 });
+    }
+    console.log("Received intent:", intent, entryId);
+
+
+    try {
+      await handle(createMoveToTrashCommand({
+        id: randomCommandId(),
+        entryId: entryId as EntryId
+      }));
+
+      return json({ success: true });
+    } catch (error) {
+      console.error("Error moving to trash:", error);
+      return json({ error: "Failed to move to trash" }, { status: 500 });
     }
   }
 
@@ -235,6 +263,14 @@ export default function FolderView() {
       );
     }
   };
+
+  const handleMoveToTrash = (entryId: string) => {
+    console.log("Moving to trash:", entryId);
+    fetcher.submit(
+      { intent: "move_to_trash", entryId },
+      { method: "post" }
+    );
+  }
 
   const handleNewFolderClick = () => {
     setIsNewFolderDialogOpen(true);
@@ -468,9 +504,9 @@ export default function FolderView() {
                         Download
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-red-600">
+                      <DropdownMenuItem className="text-red-600" onSelect={() => handleMoveToTrash(entry.id)}>
                         <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
+                        Move to Trash
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
