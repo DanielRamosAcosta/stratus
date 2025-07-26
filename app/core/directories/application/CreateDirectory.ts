@@ -3,7 +3,7 @@ import {
   createDirectoryDb,
   findDirectoryById,
 } from "../../../db/DirectoryRepository";
-import { UserId } from "../../users/domain/user";
+import { UserId } from "../../users/domain/User";
 
 export const createDirectory = async ({
   id = randomDirectoryId(),

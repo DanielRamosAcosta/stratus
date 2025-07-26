@@ -1,6 +1,6 @@
 import { deleteDirectory } from "../../../db/DirectoryRepository";
 import { EntryId } from "../../shared/domain/EntryId";
-import { UserId } from "../../users/domain/user";
+import { UserId } from "../../users/domain/User";
 
 export const moveToTrash = async ({
   id,

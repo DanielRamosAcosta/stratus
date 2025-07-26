@@ -1,7 +1,7 @@
 import z from "zod";
 import { ActionFunctionArgs, data, redirect } from "@remix-run/node";
 import jwt from "jsonwebtoken";
-import { JwtPayload } from "../../users/domain/user";
+import { JwtPayload } from "../../users/domain/User";
 import { sessionStorage } from "~/services/auth.server";
 
 
