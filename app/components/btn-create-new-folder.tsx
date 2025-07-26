@@ -69,6 +69,8 @@ export function BtnCreateNewFolder({ parentId }: CreateNewFolderProps) {
               />
               <Input
                 id="folderDescription"
+                aria-hidden="true"
+                type="hidden"
                 name="parentId"
                 placeholder="Folder description"
                 className="col-span-4"
