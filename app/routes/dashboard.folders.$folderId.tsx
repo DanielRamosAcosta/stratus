@@ -1,9 +1,7 @@
-import type {
-  MetaFunction,
-  LoaderFunctionArgs,
-} from "@remix-run/node";
+import type { MetaFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { data, redirect } from "@remix-run/node";
 import { useLoaderData, useNavigate } from "@remix-run/react";
+import { z } from "zod";
 import { Folder, File, Link, Upload, Grid3X3, List } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
@@ -28,14 +26,15 @@ import {
   getDirectoryPath,
 } from "../db/DirectoryRepository";
 import { moveToTrash } from "../core/directories/application/handlers/MoveToTrashHandler";
-import { EntryId } from "../core/shared/domain/EntryId";
+import * as EntryId from "../core/shared/domain/EntryId";
 import { BtnCreateNewFolder } from "../components/btn-create-new-folder";
 import { RowEntryActions } from "../components/row-entry-actions";
 import {
   multiplex,
   protect,
-} from "../core/shared/infrastructure/AuthenticatedFunctionArgs";
-import { asyncFlow } from "../utils/pipe";
+  validateFormData,
+} from "../core/shared/infrastructure/RemixController";
+import { asyncFlow } from "../utils/asyncFlow";
 
 export const meta: MetaFunction = () => {
   return [
@@ -47,11 +46,16 @@ export const meta: MetaFunction = () => {
 export const action = asyncFlow(
   protect,
   multiplex({
-    DELETE: async ({ request, auth }) => {
-      const formData = await request.formData();
-      const entryId = formData.get("entryId")?.toString() ?? "";
-      await moveToTrash({ id: entryId as EntryId, userId: auth.sub });
-    },
+    DELETE: asyncFlow(
+      validateFormData(
+        z.object({
+          entryId: z.uuid().transform(EntryId.cast),
+        })
+      ),
+      async ({ auth, data }) => {
+        await moveToTrash({ id: data.entryId, userId: auth.sub });
+      }
+    ),
   })
 );
 
