@@ -21,9 +21,13 @@ import { action } from "../routes/dashboard.folders";
 
 type CreateNewFolderProps = {
   parentId: string;
+  disableShortcut?: boolean;
 };
 
-export function BtnCreateNewFolder({ parentId }: CreateNewFolderProps) {
+export function BtnCreateNewFolder({
+  parentId,
+  disableShortcut = false,
+}: CreateNewFolderProps) {
   const [open, setOpen] = useState(false);
   const fetcher = useFetcher<typeof action>();
 
@@ -33,13 +37,15 @@ export function BtnCreateNewFolder({ parentId }: CreateNewFolderProps) {
   };
 
   const isSubmitting = fetcher.state === "submitting";
-
-  useShortcut(shortcut, () => {
-    setOpen(true);
-  });
+  
+  if (!disableShortcut) {
+    useShortcut(shortcut, () => {
+      setOpen(true);
+    });
+  }
 
   useEffect(() => {
-    if (fetcher.state === 'idle' && fetcher.data?.ok) {
+    if (fetcher.state === "idle" && fetcher.data?.ok) {
       setOpen(false);
     }
   }, [fetcher]);
@@ -54,10 +60,7 @@ export function BtnCreateNewFolder({ parentId }: CreateNewFolderProps) {
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
-        <fetcher.Form
-          method="post"
-          action="/dashboard/folders"
-        >
+        <fetcher.Form method="post" action="/dashboard/folders">
           <DialogHeader>
             <DialogTitle>Create New Folder</DialogTitle>
             <DialogDescription>
@@ -86,8 +89,8 @@ export function BtnCreateNewFolder({ parentId }: CreateNewFolderProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="flex items-center gap-2"
               disabled={isSubmitting}
               type="button"
@@ -96,8 +99,8 @@ export function BtnCreateNewFolder({ parentId }: CreateNewFolderProps) {
               Cancel
               <Shortcut shortcut={{ key: "Escape" }} />
             </Button>
-            <Button 
-              className="flex items-center gap-2" 
+            <Button
+              className="flex items-center gap-2"
               type="submit"
               disabled={isSubmitting}
             >

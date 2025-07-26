@@ -4,6 +4,7 @@ import {
   Option,
   ArrowBigUp,
   CornerDownLeft,
+  Delete
 } from "lucide-react";
 import { useIsMac } from "../hooks/use-is-mac";
 import {
@@ -38,7 +39,8 @@ export function Shortcut({
       {shift && <ArrowBigUp className="!h-3 w-3" />}
       {key === "Enter" && <CornerDownLeft className="!h-3 w-3" />}
       {key === "Escape" && <span className="text-xs">Esc</span>}
-      {key !== "Enter" && key !== "Escape" && <span className="text-xs">{key.toUpperCase()}</span>}
+      {key === "Backspace" && <Delete className="!h-3 w-3" />}
+      {key !== "Enter" && key !== "Escape" && key !== "Backspace" && <span className="text-xs">{key.toUpperCase()}</span>}
     </kbd>
   );
 }

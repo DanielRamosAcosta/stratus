@@ -9,7 +9,6 @@ import {
   DirectoryId,
   randomDirectoryId,
 } from "../core/directories/domain/DirectoryId";
-import { setTimeout } from "timers/promises";
 
 export async function action({ request, params }: ActionFunctionArgs) {
   console.log("Received action:", { request, params });
@@ -17,11 +16,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   let accessToken = session.get("access_token");
   if (!accessToken) throw redirect("/login");
 
-  console.log("Create folder!");
-
   const formData = await request.formData();
-  console.log("url", formData);
-  await setTimeout(4000); // Simulate a delay for the action
 
   await handleCreateDirectory(
     createDirectoryCommand({
@@ -33,8 +28,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
         randomDirectoryId(), // Default to a random parent ID if not provided,
     })
   );
-
-  const finalUrl = `/dashboard/folders/${formData.get("parentId")}`;
 
   return data({ ok: true, });
 }

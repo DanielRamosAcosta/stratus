@@ -1,7 +1,5 @@
 import { createContext, useContext, useEffect, useRef } from "react";
-import { useRouteLoaderData } from "@remix-run/react";
 import { useIsMac } from "../hooks/use-is-mac";
-import { register } from "module";
 
 export const enum KeyboardModKey {
   META = "META",
@@ -46,7 +44,7 @@ export const ShortcutProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       console.log(e.metaKey, e.ctrlKey, e.altKey, e.key);
-      const matchedRegistrar = registrars.current.find(([shortcut, cb]) => {
+      const matchedRegistrars = registrars.current.filter(([shortcut, cb]) => {
         const matchesMac = isMac && shortcut.mac.key === e.key &&
           (shortcut.mac.meta ? e.metaKey : true) &&
           (shortcut.mac.ctrl ? e.ctrlKey : true) &&
@@ -61,12 +59,12 @@ export const ShortcutProvider: React.FC<{ children: React.ReactNode }> = ({
         return matchesMac || matchesOther;
       });
 
-      if (matchedRegistrar) {
+      matchedRegistrars.forEach((matchedRegistrar) => {
         e.preventDefault();
         const [shortcut, cb] = matchedRegistrar;
         console.log("Shortcut matched:", shortcut);
         cb();
-      }
+      })
     };
 
     window.addEventListener("keydown", onKeyDown);
@@ -95,7 +93,7 @@ export const ShortcutProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-export function useShortcut(shortcut: PlatformShortcut, cb: () => void) {
+export function useShortcut(shortcut: PlatformShortcut, cb: () => void, dependencies: any[] = []) {
   const context = useContext(ShortcutContext);
   const { isMac } = useIsMac();
   
@@ -110,7 +108,7 @@ export function useShortcut(shortcut: PlatformShortcut, cb: () => void) {
       context.unregister(cb);
       console.log("Unregistered shortcut", shortcut, "for", isMac ? "Mac" : "Other");
     }
-  }, []);
+  }, dependencies);
 
   return {display: isMac ? shortcut.mac : shortcut.other};
 }

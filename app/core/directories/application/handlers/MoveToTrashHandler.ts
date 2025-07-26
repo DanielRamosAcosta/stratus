@@ -35,6 +35,5 @@ export function createMoveToTrashCommand({
 }
 
 export const handleMoveToTrash: CommandHandler<MoveToTrashCommand> = async (command): Promise<void> => {
-  await setTimeout(250);
   await deleteDirectory(command.payload.id as string);
 }

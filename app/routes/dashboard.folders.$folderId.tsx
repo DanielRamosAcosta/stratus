@@ -9,26 +9,11 @@ import {
   Folder,
   File,
   Link,
-  MoreVertical,
   Upload,
-  FolderPlus,
   Grid3X3,
   List,
-  Download,
-  Trash2,
-  ChevronUp,
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -45,29 +30,17 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
 import { sessionStorage } from "~/services/auth.server";
 import {
   findDirectoryContents,
   getDirectoryPath,
 } from "../db/DirectoryRepository";
-import { handle } from "../core/entrypoint";
-import { createDirectoryCommand } from "../core/directories/application/handlers/CreateDirectoryHandler";
 import { randomCommandId } from "../core/shared/domain/CommandBus";
-import {
-  DirectoryId,
-  randomDirectoryId,
-} from "../core/directories/domain/DirectoryId";
-import { createMoveToTrashCommand } from "../core/directories/application/handlers/MoveToTrashHandler";
+import { createMoveToTrashCommand, handleMoveToTrash } from "../core/directories/application/handlers/MoveToTrashHandler";
 import { EntryId } from "../core/shared/domain/EntryId";
 import { BtnCreateNewFolder } from "../components/btn-create-new-folder";
-import { useState } from "react";
+import { RowEntryActions } from "../components/row-entry-actions";
+import { setTimeout } from "node:timers/promises";
 
 export const meta: MetaFunction = () => {
   return [
@@ -77,65 +50,38 @@ export const meta: MetaFunction = () => {
 };
 
 export async function action({ request, params }: ActionFunctionArgs) {
-  console.log("Received action:", { request, params });
   let session = await sessionStorage.getSession(request.headers.get("cookie"));
   let accessToken = session.get("access_token");
   if (!accessToken) throw redirect("/login");
 
-  const formData = await request.formData();
-  const intent = formData.get("intent");
+  switch (request.method) {
+    case "DELETE": {
+      const formData = await request.formData();
+      const entryId = formData.get("entryId")?.toString();
+      if (!entryId) {
+        return json({ error: "Entry ID is required" }, { status: 400 });
+      }
 
-  if (intent === "create_folder") {
-    const folderName = formData.get("folderName")?.toString();
-    const parentId = (params.folderId ||
-      "343cbdbd-2160-4e50-8e05-5ea20dfe0e24") as DirectoryId;
+      try {
+        await setTimeout(1000); // Simulate some processing delay
+        await handleMoveToTrash(
+          createMoveToTrashCommand({
+            id: randomCommandId(),
+            entryId: entryId as EntryId,
+          })
+        );
 
-    if (!folderName || folderName.trim() === "") {
-      return json({ error: "Folder name is required" }, { status: 400 });
+        return json({ success: true });
+      } catch (error) {
+        console.error("Error moving to trash:", error);
+        return json({ error: "Failed to move to trash" }, { status: 500 });
+      }
     }
-
-    try {
-      const commandId = randomCommandId();
-      await handle(
-        createDirectoryCommand({
-          id: commandId,
-          directoryId: randomDirectoryId(),
-          name: folderName.trim(),
-          parentId,
-        })
-      );
-
-      return redirect(`/dashboard/folders/${parentId}?commandId=${commandId}`);
-    } catch (error) {
-      console.error("Error creating directory:", error);
-      return json({ error: "Failed to create folder" }, { status: 500 });
-    }
-  }
-
-  if (intent === "move_to_trash") {
-    console.log("Intent to move to trash received");
-    const entryId = formData.get("entryId")?.toString();
-    if (!entryId) {
-      return json({ error: "Entry ID is required" }, { status: 400 });
-    }
-    console.log("Received intent:", intent, entryId);
-
-    try {
-      await handle(
-        createMoveToTrashCommand({
-          id: randomCommandId(),
-          entryId: entryId as EntryId,
-        })
-      );
-
-      return json({ success: true });
-    } catch (error) {
-      console.error("Error moving to trash:", error);
-      return json({ error: "Failed to move to trash" }, { status: 500 });
+    default: {
+      console.warn("Unsupported action method:", request.method);
+      return json({ error: "Unsupported action" }, { status: 405 });
     }
   }
-
-  return json({ error: "Invalid action" }, { status: 400 });
 }
 
 type EntryDirectory = {
@@ -334,31 +280,7 @@ export default function FolderView() {
                   {entry.type === "file" ? formatBytes(entry.size) : "—"}
                 </TableCell>
                 <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
-                        <Download className="h-4 w-4 mr-2" />
-                        Download
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-red-600"
-                        onSelect={() => handleMoveToTrash(entry.id)}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Move to Trash
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <RowEntryActions entryId={entry.id} isSelected={false} />
                 </TableCell>
               </TableRow>
             ))}
@@ -380,7 +302,7 @@ export default function FolderView() {
                 <Upload className="h-4 w-4 mr-2" />
                 Upload files
               </Button>
-              <BtnCreateNewFolder parentId={loaderData.folderId} />
+              <BtnCreateNewFolder parentId={loaderData.folderId} disableShortcut />
             </div>
           </div>
         )}
@@ -393,26 +315,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   let session = await sessionStorage.getSession(request.headers.get("cookie"));
   let accessToken = session.get("access_token");
   if (!accessToken) throw redirect("/login");
-
-  if (params.commandId) {
-    console.log("I should wait for command:", params.commandId);
-    while (true) {
-      const response = await fetch(`/meta/commands/${params.commandId}`);
-      const result = await response.json();
-
-      if (result.finished) {
-        console.log("Command finished:", params.commandId);
-        break;
-      } else {
-        console.log("Command still running, waiting...");
-      }
-
-      // Wait for 1 second before checking again
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
-    console.log("Command completed:", params.commandId);
-    // After command completion, redirect to the folder
-  }
 
   const { directories, files } = await findDirectoryContents(
     params.folderId || "root"
