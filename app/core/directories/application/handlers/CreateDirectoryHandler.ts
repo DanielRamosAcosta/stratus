@@ -41,7 +41,6 @@ export function createDirectoryCommand({
 }
 
 export const handleCreateDirectory: CommandHandler<CreateDirectoryCommand> = async (command): Promise<void> => {
-
   await setTimeout(250);
 
   const directory = await findDirectoryById(command.payload.parentId);

@@ -27,6 +27,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "~/components/ui/dialog";
 import {
   Breadcrumb,
@@ -65,6 +66,7 @@ import {
 } from "../core/directories/domain/DirectoryId";
 import { createMoveToTrashCommand } from "../core/directories/application/handlers/MoveToTrashHandler";
 import { EntryId } from "../core/shared/domain/EntryId";
+import { BtnCreateNewFolder } from "../components/btn-create-new-folder";
 
 export const meta: MetaFunction = () => {
   return [
@@ -172,7 +174,6 @@ type LoaderData = {
   entries: (EntryDirectory | EntryFile | EntrySymlink)[];
 };
 
-
 export default function FolderView() {
   const loaderData = useLoaderData<LoaderData>();
   const navigate = useNavigate();
@@ -182,7 +183,6 @@ export default function FolderView() {
   };
 
   const handleNewFolderClick = () => {};
-
 
   // Sort entries
   const sortedEntries = loaderData.entries;
@@ -225,8 +225,7 @@ export default function FolderView() {
     }
   };
 
-  const handleEntryClick = (
-  ) => {
+  const handleEntryClick = () => {
     // Single click selects the entry
   };
 
@@ -284,17 +283,7 @@ export default function FolderView() {
               <Upload className="h-4 w-4 mr-2" />
               Upload
             </Button>
-            <Button
-              variant="outline"
-              onClick={handleNewFolderClick}
-              className="flex items-center gap-2"
-            >
-              <FolderPlus className="h-4 w-4" />
-              New Folder
-              <kbd className="hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-                <ChevronUp className="h-2 w-2" />N
-              </kbd>
-            </Button>
+            <BtnCreateNewFolder parentId={loaderData.folderId} />
           </div>
 
           <div className="flex items-center space-x-2">
@@ -314,13 +303,9 @@ export default function FolderView() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[50%]">
-                Name
-              </TableHead>
+              <TableHead className="w-[50%]">Name</TableHead>
               <TableHead>Owner</TableHead>
-              <TableHead>
-                Last modified
-              </TableHead>
+              <TableHead>Last modified</TableHead>
               <TableHead>File size</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
@@ -396,52 +381,11 @@ export default function FolderView() {
                 <Upload className="h-4 w-4 mr-2" />
                 Upload files
               </Button>
-              <Button variant="outline">
-                <FolderPlus className="h-4 w-4 mr-2" />
-                New folder
-              </Button>
+              <BtnCreateNewFolder parentId={loaderData.folderId} />
             </div>
           </div>
         )}
       </div>
-
-      {/* New Folder Dialog */}
-      <Dialog>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Create New Folder</DialogTitle>
-            <DialogDescription>
-              Enter a name for the new folder. This will create a new folder in
-              the current directory.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Input
-                id="folderName"
-                placeholder="New folder"
-                className="col-span-4"
-                autoFocus
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" className="flex items-center gap-2">
-              Cancel
-              <kbd className="hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-                Esc
-              </kbd>
-            </Button>
-            <Button className="flex items-center gap-2">
-              <FolderPlus className="h-4 w-4 mr-2" />
-              Create
-              <kbd className="hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border border-primary-foreground/20 bg-primary-foreground/10 px-1.5 font-mono text-[10px] font-medium text-primary-foreground/80">
-                ⏎
-              </kbd>
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
