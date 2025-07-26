@@ -1,6 +1,10 @@
-import { useState, useEffect } from "react";
-import { Form, useFetcher, useLoaderData } from "@remix-run/react";
-import { ActionFunctionArgs, data, json } from "@remix-run/node";
+import { useEffect } from "react";
+import {
+  useFetcher,
+  useLoaderData,
+  useRevalidator,
+} from "@remix-run/react";
+import { data } from "@remix-run/node";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -10,87 +14,25 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { RefreshCw, Database, HardDrive } from "lucide-react";
-import { Input } from "../components/ui/input";
-import { findRunningRescan } from "../db/RescanRepository";
-import { NewRescan } from "../db/types";
+import { findLatestRescan } from "../db/RescanRepository";
+import { isCompleted, isError, isRunning } from "../core/rescans/domain/rescan";
 
-type RescanStatus = {
-  id: string;
-  status: "running" | "error";
-  totalFiles: number;
-  processedFiles: number;
-};
-
-type NoRescanStatus = undefined;
-
-type RescanStatusRunning = {
-  type: "running";
-  totalFiles: number;
-  processedFiles: number;
-  startedAt: Date;
-};
-
-type RescanStatusCompleted = {
-  type: "completed";
-  totalFiles: number;
-  processedFiles: number;
-  startedAt: Date;
-  finishedAt: Date;
-};
-
-type RescanStatusError = {
-  type: "error";
-  message: string;
-  startedAt: Date;
-  finishedAt: Date;
-};
-
-type Rescan =
-  | NoRescanStatus
-  | RescanStatusRunning
-  | RescanStatusCompleted
-  | RescanStatusError;
-
-function name(params: NewRescan): RescanStatus {
-  return {
-    id: params.id,
-    status: "running",
-    totalFiles: params.total_files,
-    processedFiles: params.processed_files,
-  };
-}
 
 export default function AdministrationPage() {
-  const scan = useLoaderData<typeof loader>();
+  const { rescan } = useLoaderData<typeof loader>();
+  const { revalidate } = useRevalidator();
 
-  const rescanInitial: RescanStatus | null = scan.scan ? name(scan.scan) : null;
+  console.log("Rescan status:", rescan);
 
   const fetcher = useFetcher<void>();
-
-  const otherFetcher = useFetcher<typeof loader>();
-
-  const rescan =
-    otherFetcher.data && otherFetcher.data.scan
-      ? name(otherFetcher.data.scan)
-      : rescanInitial;
-
-  const progress = rescan
-    ? Math.round((rescan.processedFiles * 100) / rescan.totalFiles)
-    : 0;
 
   // refetch rescan status every 5 seconds
   useEffect(() => {
     if (!rescan) return;
 
-    const interval = setInterval(() => {
-      otherFetcher.load("/dashboard/administration");
-    }, 1000);
+    const interval = setInterval(revalidate, 1000);
     return () => clearInterval(interval);
-  }, [, rescan]);
-
-  const isScanning = (rescan && rescan.status === "running") || false;
-
-  console.log(otherFetcher.data);
+  }, [revalidate, rescan, fetcher.data]);
 
   return (
     <div className="space-y-6 p-8">
@@ -124,39 +66,53 @@ export default function AdministrationPage() {
               </p>
             </div>
 
-            {rescan && rescan.status === "running" && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2">
-                    <Database className="h-4 w-4" />
-                    Scanning...
-                  </span>
-                  {rescan.processedFiles && rescan.totalFiles && (
-                    <span className="text-muted-foreground">
-                      {rescan.processedFiles} / {rescan.totalFiles}
-                    </span>
-                  )}
-                </div>
-                <div className="w-full bg-secondary rounded-full h-2">
-                  <div
-                    className="bg-primary h-2 rounded-full transition-all duration-300 ease-out"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {Math.floor(progress)}% complete
-                </div>
-              </div>
-            )}
+            {isRunning(rescan) &&
+              (() => {
+                const progress = Math.round(
+                  (rescan.processedFiles * 100) / rescan.totalFiles
+                );
+
+                return (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-2">
+                        <Database className="h-4 w-4" />
+                        Scanning...
+                      </span>
+                      {rescan.processedFiles && rescan.totalFiles && (
+                        <span className="text-muted-foreground">
+                          {rescan.processedFiles} / {rescan.totalFiles}
+                        </span>
+                      )}
+                    </div>
+                    <div className="w-full bg-secondary rounded-full h-2">
+                      <div
+                        className="bg-primary h-2 rounded-full transition-all duration-300 ease-out"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {Math.floor(progress)}% complete
+                    </div>
+                  </div>
+                );
+              })()}
 
             <fetcher.Form method="post" action="rescan">
-              <Button disabled={isScanning} className="w-full sm:w-auto">
-                {isScanning ? (
+              <Button disabled={isRunning(rescan)} className="w-full sm:w-auto">
+                {isRunning(rescan) && (
                   <>
                     <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                     Scanning...
                   </>
-                ) : (
+                )}
+                {isError(rescan) && (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Retry Rescan
+                  </>
+                )}
+                {rescan == null || isCompleted(rescan) && (
                   <>
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Rescan Files
@@ -203,8 +159,8 @@ export async function loader() {
   const ownerId =
     "CiQ5OGIwODBiNS0yNGU0LTRiMGYtOTc5Yy00M2E5YzQyZTNjMTcSBWxvY2Fs";
 
-  const scan = await findRunningRescan(ownerId);
+  const rescan = await findLatestRescan(ownerId);
 
   console.log("Am I rescanning?");
-  return data({ scan });
+  return data({ rescan });
 }

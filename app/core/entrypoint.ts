@@ -1,6 +1,6 @@
 import { handleCreateDirectory } from "./directories/application/handlers/CreateDirectoryHandler";
 import { handleMoveToTrash } from "./directories/application/handlers/MoveToTrashHandler";
-import { handleRescan } from "./directories/application/handlers/RescanHandler";
+import { handleRescan } from "./rescans/application/RescanHandler";
 import { commandStatus } from "./shared/deleteme";
 import {
   Command,

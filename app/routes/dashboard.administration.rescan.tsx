@@ -2,7 +2,7 @@ import { data, json, redirect } from "@remix-run/node";
 import {
   createRescanCommand,
   handleRescan,
-} from "../core/directories/application/handlers/RescanHandler";
+} from "../core/rescans/application/RescanHandler";
 
 export async function action() {
   console.log("Rescanning!!");
