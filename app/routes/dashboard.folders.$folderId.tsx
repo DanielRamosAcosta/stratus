@@ -1,10 +1,8 @@
-import jwt from "jsonwebtoken";
 import type {
   MetaFunction,
   LoaderFunctionArgs,
-  ActionFunctionArgs,
 } from "@remix-run/node";
-import { data, redirect, json } from "@remix-run/node";
+import { data, redirect } from "@remix-run/node";
 import { useLoaderData, useNavigate } from "@remix-run/react";
 import { Folder, File, Link, Upload, Grid3X3, List } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -33,8 +31,11 @@ import { moveToTrash } from "../core/directories/application/handlers/MoveToTras
 import { EntryId } from "../core/shared/domain/EntryId";
 import { BtnCreateNewFolder } from "../components/btn-create-new-folder";
 import { RowEntryActions } from "../components/row-entry-actions";
-import { setTimeout } from "node:timers/promises";
-import { multiplex, protect } from "../core/shared/infrastructure/AuthenticatedFunctionArgs";
+import {
+  multiplex,
+  protect,
+} from "../core/shared/infrastructure/AuthenticatedFunctionArgs";
+import { asyncFlow } from "../utils/pipe";
 
 export const meta: MetaFunction = () => {
   return [
@@ -43,19 +44,16 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export async function action(params: ActionFunctionArgs) {
-  const newArgs = await protect(params);
-
-  const handler = multiplex<typeof newArgs>({
+export const action = asyncFlow(
+  protect,
+  multiplex({
     DELETE: async ({ request, auth }) => {
       const formData = await request.formData();
       const entryId = formData.get("entryId")?.toString() ?? "";
       await moveToTrash({ id: entryId as EntryId, userId: auth.sub });
     },
-  });
-
-  return handler(newArgs);
-}
+  })
+);
 
 type EntryDirectory = {
   type: "directory";
