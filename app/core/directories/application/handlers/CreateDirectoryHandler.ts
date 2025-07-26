@@ -1,17 +1,20 @@
-import { DirectoryId } from "../../domain/DirectoryId";
+import { DirectoryId, randomDirectoryId } from "../../domain/DirectoryId";
 import {
   createDirectoryDb,
   findDirectoryById,
 } from "../../../../db/DirectoryRepository";
+import { UserId } from "../../../users/domain/user";
 
 export const createDirectory = async ({
-  id,
+  id = randomDirectoryId(),
   name,
   parentId,
+  triggeredBy
 }: {
-  id: DirectoryId;
+  id?: DirectoryId;
   name: string;
   parentId: DirectoryId;
+  triggeredBy: UserId;
 }): Promise<void> => {
   const parent = await findDirectoryById(parentId);
 

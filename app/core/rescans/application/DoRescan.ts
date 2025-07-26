@@ -1,19 +1,21 @@
 import { save } from "../../../db/RescanRepository";
 import { setTimeout } from "node:timers/promises";
 import { catchError, complete, launch } from "../domain/rescan";
+import { RescanId } from "../domain/RescanId";
+import { UserId } from "../../users/domain/user";
 
 export const doRescan = async ({
-  id,
-  ownerId,
+  id = crypto.randomUUID() as RescanId,
+  triggeredBy,
 }: {
-  id: string;
-  ownerId: string;
+  id?: RescanId;
+  triggeredBy: UserId;
 }): Promise<void> => {
   await setTimeout(1000); // Simulate some delay for the rescan process
 
   const totalFiles = Math.floor(Math.random() * (1000 - 700 + 1)) + 700;
 
-  const rescan = launch({ ownerId, totalFiles });
+  const rescan = launch({ ownerId: triggeredBy, totalFiles });
   await save(rescan);
 
   Promise.resolve()
