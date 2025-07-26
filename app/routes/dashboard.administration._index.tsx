@@ -26,13 +26,10 @@ export default function AdministrationPage() {
 
   const fetcher = useFetcher<void>();
 
-  // refetch rescan status every 5 seconds
   useEffect(() => {
-    if (!rescan) return;
-
     const interval = setInterval(revalidate, 1000);
     return () => clearInterval(interval);
-  }, [revalidate, rescan, fetcher.data]);
+  }, [revalidate, rescan]);
 
   return (
     <div className="space-y-6 p-8">
@@ -98,6 +95,80 @@ export default function AdministrationPage() {
                 );
               })()}
 
+            {isError(rescan) && (
+              <div className="rounded-md bg-red-50 dark:bg-red-950 p-3 border border-red-200 dark:border-red-800">
+                <div className="flex">
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                      Rescan Failed
+                    </h3>
+                    <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+                      <p>{rescan.message}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {isCompleted(rescan) && (
+              <div className="rounded-lg bg-green-50 dark:bg-green-950/20 p-4 border border-green-200 dark:border-green-800/50">
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0">
+                    <div className="flex items-center justify-center w-8 h-8 bg-green-100 dark:bg-green-900/50 rounded-full">
+                      <Database className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-medium text-green-800 dark:text-green-200">
+                      Rescan Completed Successfully
+                    </h3>
+                    <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-green-700 dark:text-green-300 font-medium">
+                          Files Processed:
+                        </span>
+                        <span className="ml-2 text-green-600 dark:text-green-400">
+                          {rescan.processedFiles}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-green-700 dark:text-green-300 font-medium">
+                          Total Files:
+                        </span>
+                        <span className="ml-2 text-green-600 dark:text-green-400">
+                          {rescan.totalFiles}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-green-700 dark:text-green-300 font-medium">
+                          Started:
+                        </span>
+                        <span className="ml-2 text-green-600 dark:text-green-400">
+                          {rescan.startedAt.toISOString()}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-green-700 dark:text-green-300 font-medium">
+                          Completed:
+                        </span>
+                        <span className="ml-2 text-green-600 dark:text-green-400">
+                          {rescan.finishedAt.toISOString()}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-800/50">
+                      <div className="flex items-center justify-end text-xs text-green-600 dark:text-green-400 gap-1">
+                        <span>Duration:</span>
+                        <span className="font-medium">
+                          {Math.round((rescan.finishedAt.getTime() - rescan.startedAt.getTime()) / 1000)}s
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <fetcher.Form method="post" action="rescan">
               <Button disabled={isRunning(rescan)} className="w-full sm:w-auto">
                 {isRunning(rescan) && (
@@ -140,12 +211,6 @@ export default function AdministrationPage() {
               <div>
                 <div className="font-medium">Database</div>
                 <div className="text-muted-foreground">PostgreSQL</div>
-              </div>
-              <div>
-                <div className="font-medium">Last Rescan</div>
-                <div className="text-muted-foreground">
-                  {rescan ? "Just now" : "Never"}
-                </div>
               </div>
             </div>
           </CardContent>

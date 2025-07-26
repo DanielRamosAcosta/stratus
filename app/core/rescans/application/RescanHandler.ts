@@ -37,7 +37,7 @@ export function createRescanCommand({
 export const handleRescan: CommandHandler<RescanCommand> = async (
   command
 ): Promise<void> => {
-  const totalFiles = 700;
+  const totalFiles = Math.floor(Math.random() * (1000 - 700 + 1)) + 700;
 
   const rescan = await launch({ ownerId: command.payload.ownerId, totalFiles });
 
