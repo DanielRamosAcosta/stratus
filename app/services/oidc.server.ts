@@ -38,6 +38,7 @@ export const oidcInstance = async () => {
           state: client.randomState(),
         };
 
+        console.log("FULL CONFIG 0", JSON.stringify(clientConfig, null, 2));
         const redirectTo = client.buildAuthorizationUrl(
           clientConfig,
           parameters
@@ -54,11 +55,13 @@ export const oidcInstance = async () => {
         const fullUrl = new URL(url);
         fullUrl.searchParams.delete("state");
 
+        console.log("FULL CONFIG 1", JSON.stringify(clientConfig, null, 2));
         const tokens = await client.authorizationCodeGrant(clientConfig, fullUrl, {
           pkceCodeVerifier,
         });
         console.log("tokens", JSON.stringify(tokens, null, 2));
 
+        console.log("FULL CONFIG 2", JSON.stringify(clientConfig, null, 2));
         console.log("going to perform token introspection");
         const result = await client.tokenIntrospection(clientConfig, tokens.access_token)
         console.log("introspection result", JSON.stringify(result, null, 2));
