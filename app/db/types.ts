@@ -57,6 +57,15 @@ export type RescanErrorTable = {
   finished_at: Date;
 };
 
+export type EntryTable = {
+  id: string;
+  name: string;
+  parent_id: string;
+} & (
+  | { type: "directory" }
+  | { type: "file"; mime_type: string }
+)
+
 export interface Database {
   directories: DirectoryTable;
   files: FileTable;
@@ -64,4 +73,5 @@ export interface Database {
   rescans_running: RescanRunningTable;
   rescans_completed: RescanCompletedTable;
   rescans_error: RescanErrorTable;
+  entries: EntryTable;
 }

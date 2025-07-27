@@ -1,10 +1,17 @@
+import { useNavigate } from "@remix-run/react";
 import {
-  Calendar,
-  Smile,
-  Calculator,
-  User,
-  CreditCard,
+  Home,
+  HardDrive,
+  Users,
+  Clock,
+  Star,
+  Trash2,
   Settings,
+  User,
+  Plus,
+  Upload,
+  Search,
+  LogOut,
 } from "lucide-react";
 import {
   CommandShortcut,
@@ -16,65 +23,6 @@ import {
   CommandItem,
   CommandSeparator,
 } from "./ui/command";
-import { setTimeout } from "node:timers/promises";
-
-async function doSearch(query: string) {
-  await setTimeout(100); // Simulate a search delay
-
-  const directories = [
-    {
-      id: "343cbdbd-2160-4e50-8e05-5ea20dfe0e24",
-      name: "My Drive",
-      type: "directory",
-    },
-    {
-      id: "60d6ca60-499a-4155-af9a-abaced8f3b45",
-      name: "Documents",
-      type: "directory",
-    },
-    {
-      id: "759129d0-7de3-4ec0-933a-e2ae57b917a4",
-      name: "Images",
-      type: "directory",
-    },
-    {
-      id: "4bde9b37-6251-4f24-9802-fc0026f1dcdd",
-      name: "Books",
-      type: "directory",
-    },
-  ];
-
-  const files = [
-    {
-      id: "1",
-      name: "Resume.pdf",
-      parentId: "343cbdbd-2160-4e50-8e05-5ea20dfe0e24",
-      type: "file",
-    },
-    {
-      id: "2",
-      name: "Vacation.jpg",
-      parentId: "759129d0-7de3-4ec0-933a-e2ae57b917a4",
-      type: "file",
-    },
-    {
-      id: "3",
-      name: "Song.mp3",
-      parentId: "759129d0-7de3-4ec0-933a-e2ae57b917a4",
-      type: "file",
-    },
-    {
-      id: "4",
-      name: "Movie.mp4",
-      parentId: "759129d0-7de3-4ec0-933a-e2ae57b917a4",
-      type: "file",
-    },
-  ];
-
-  return [...directories, ...files].filter((entry) =>
-    entry.name.toLowerCase().includes(query.toLowerCase())
-  );
-}
 
 export function AppCommand({
   open,
@@ -83,41 +31,103 @@ export function AppCommand({
   open: boolean;
   setOpen: (open: boolean) => void;
 }) {
+  const navigate = useNavigate();
+
+  const handleSelect = (callback: () => void) => {
+    callback();
+    setOpen(false);
+  };
+
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
       <CommandInput placeholder="Type a command or search..." />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
-        <CommandGroup heading="Suggestions">
-          <CommandItem>
-            <Calendar />
-            <span>Calendar</span>
+        
+        <CommandGroup heading="Navigation">
+          <CommandItem onSelect={() => handleSelect(() => 
+            navigate('/dashboard/folders/343cbdbd-2160-4e50-8e05-5ea20dfe0e24')
+          )}>
+            <Home className="mr-2 h-4 w-4" />
+            <span>Home</span>
           </CommandItem>
-          <CommandItem>
-            <Smile />
-            <span>Search Emoji</span>
+          <CommandItem onSelect={() => handleSelect(() => 
+            navigate('/dashboard/folders/343cbdbd-2160-4e50-8e05-5ea20dfe0e24')
+          )}>
+            <HardDrive className="mr-2 h-4 w-4" />
+            <span>My Drive</span>
           </CommandItem>
-          <CommandItem>
-            <Calculator />
-            <span>Calculator</span>
+          <CommandItem onSelect={() => handleSelect(() => 
+            navigate('/dashboard/shared')
+          )}>
+            <Users className="mr-2 h-4 w-4" />
+            <span>Shared with me</span>
+          </CommandItem>
+          <CommandItem onSelect={() => handleSelect(() => 
+            navigate('/dashboard/recent')
+          )}>
+            <Clock className="mr-2 h-4 w-4" />
+            <span>Recent files</span>
+          </CommandItem>
+          <CommandItem onSelect={() => handleSelect(() => 
+            navigate('/dashboard/favourites')
+          )}>
+            <Star className="mr-2 h-4 w-4" />
+            <span>Favourites</span>
+          </CommandItem>
+          <CommandItem onSelect={() => handleSelect(() => 
+            navigate('/dashboard/trash')
+          )}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            <span>Trash</span>
           </CommandItem>
         </CommandGroup>
+
         <CommandSeparator />
+
         <CommandGroup heading="Settings">
-          <CommandItem>
-            <User />
-            <span>Profile</span>
-            <CommandShortcut>⌘P</CommandShortcut>
+          <CommandItem onSelect={() => handleSelect(() => 
+            navigate('/dashboard/account')
+          )}>
+            <User className="mr-2 h-4 w-4" />
+            <span>Account settings</span>
           </CommandItem>
-          <CommandItem>
-            <CreditCard />
-            <span>Billing</span>
-            <CommandShortcut>⌘B</CommandShortcut>
+          <CommandItem onSelect={() => handleSelect(() => 
+            navigate('/dashboard/administration')
+          )}>
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Administration</span>
           </CommandItem>
-          <CommandItem>
-            <Settings />
-            <span>Settings</span>
-            <CommandShortcut>⌘S</CommandShortcut>
+        </CommandGroup>
+
+        <CommandSeparator />
+
+        <CommandGroup heading="Actions">
+          <CommandItem onSelect={() => handleSelect(() => {
+            // TODO: Implement create folder functionality
+            console.log("Create new folder");
+          })}>
+            <Plus className="mr-2 h-4 w-4" />
+            <span>New folder</span>
+          </CommandItem>
+          <CommandItem onSelect={() => handleSelect(() => {
+            // TODO: Implement upload files functionality
+            console.log("Upload files");
+          })}>
+            <Upload className="mr-2 h-4 w-4" />
+            <span>Upload files</span>
+          </CommandItem>
+          <CommandItem onSelect={() => handleSelect(() => 
+            navigate('/dashboard/search')
+          )}>
+            <Search className="mr-2 h-4 w-4" />
+            <span>Search anywhere</span>
+          </CommandItem>
+          <CommandItem onSelect={() => handleSelect(() => 
+            navigate('/auth/logout')
+          )}>
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Log out</span>
           </CommandItem>
         </CommandGroup>
       </CommandList>
