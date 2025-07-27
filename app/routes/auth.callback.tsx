@@ -9,6 +9,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const tokens = await oidcClient.authorizationCodeGrant(request.url, session.get("code_verifier"))
 
+  console.log("tokens", tokens);
+
   session.set("access_token", tokens.access_token);
 
   return redirect("/", {
