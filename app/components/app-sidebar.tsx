@@ -27,7 +27,7 @@ import {
 // This is sample data.
 const data = {
   user: {
-    name: "Daniel Ramos",
+    name: "Dani",
     email: "danielramosacosta1@gmail.com",
     avatar: "https://gravatar.com/avatar/107ec5a8eff9589aaf115587b8af2a49?size=256",
   },

@@ -1,20 +1,11 @@
 import { Insertable, Selectable, Updateable } from "kysely";
-
-type UserTable = {
-  id: string;
-  name: string;
-};
-
-export type User = Selectable<UserTable>;
-export type NewUser = Insertable<UserTable>;
-export type UserUpdate = Updateable<UserTable>;
+import { UserTable } from "../../../users/infrastructure/UserTable";
 
 export type DirectoryTable = {
   id: string;
   name: string;
   owner_id: string;
   parent_id: string;
-  root: boolean;
   last_modified_at: Date;
 };
 

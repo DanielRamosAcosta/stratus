@@ -1,10 +1,8 @@
 import { DirectoryId, randomDirectoryId } from "../domain/DirectoryId";
-import {
-  createDirectoryDb,
-  findDirectoryById,
-} from "../../../db/DirectoryRepository";
+
 import { UserId } from "../../users/domain/User";
-import { NewDirectory } from "../../../db/types";
+import { findDirectoryById, createDirectoryDb } from "../../shared/infrastructure/db/DirectoryRepository";
+import { NewDirectory } from "../../shared/infrastructure/db/types";
 
 export const createDirectory = async ({
   id = randomDirectoryId(),
@@ -28,7 +26,6 @@ export const createDirectory = async ({
     name,
     owner_id: parent.owner_id, // Assuming the owner is the same as the parent
     parent_id: parentId,
-    root: false, // This is not a root directory
     last_modified_at: new Date(),
   };
 

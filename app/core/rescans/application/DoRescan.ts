@@ -1,8 +1,8 @@
-import { save } from "../../../db/RescanRepository";
 import { setTimeout } from "node:timers/promises";
 import { catchError, complete, launch } from "../domain/rescan";
 import { RescanId } from "../domain/RescanId";
 import { UserId } from "../../users/domain/User";
+import { save } from "../../shared/infrastructure/db/RescanRepository";
 
 export const doRescan = async ({
   id = crypto.randomUUID() as RescanId,

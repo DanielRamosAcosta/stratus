@@ -1,8 +1,8 @@
 import { sql } from "kysely";
-import { db } from "../../../db/database";
 import { CommandEntry } from "../domain/CommandEntry";
 import * as FileId from "../../files/domain/FileId";
 import * as DirectoryId from "../../directories/domain/DirectoryId";
+import { db } from "../../shared/infrastructure/db/database";
 
 export async function commandSearch(query: string): Promise<CommandEntry[]> {
   console.log("Searching for entries with query:", query);  

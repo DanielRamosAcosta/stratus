@@ -1,7 +1,7 @@
 import { Database } from './types' // this is the Database interface we defined earlier
 import { Pool } from 'pg'
 import { Kysely, PostgresDialect } from 'kysely'
-import { config } from '../core/shared/infrastructure/config'
+import { config } from '../config'
 
 const dialect = new PostgresDialect({
   pool: new Pool({

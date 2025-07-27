@@ -2,27 +2,25 @@ import { z } from "zod";
 import { createDirectory } from "../core/directories/application/CreateDirectory";
 import * as DirectoryId from "../core/directories/domain/DirectoryId";
 import { asyncFlow } from "../utils/asyncFlow";
-import {
-  multiplex,
-  protect,
-  validateFormData,
-} from "../core/shared/infrastructure/RemixController";
+import { withProtection } from "../core/shared/infrastructure/middlewares/withProtection";
+import { withMultiplexer } from "../core/shared/infrastructure/middlewares/withMultiplexer";
+import { withValidFormData } from "../core/shared/infrastructure/middlewares/withValidFormData";
 
 export const action = asyncFlow(
-  protect,
-  multiplex({
+  withProtection,
+  withMultiplexer({
     POST: asyncFlow(
-      validateFormData(
+      withValidFormData(
         z.object({
           name: z.string().min(1),
           parentId: z.uuid().transform(DirectoryId.cast),
         })
       ),
-      async ({ auth, data }) => {
+      async ({ user, data }) => {
         await createDirectory({
           name: data.name,
           parentId: data.parentId,
-          triggeredBy: auth.sub,
+          triggeredBy: user.sub,
         });
       }
     ),

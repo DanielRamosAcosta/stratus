@@ -21,21 +21,17 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { sessionStorage } from "~/services/auth.server";
-import {
-  findDirectoryContents,
-  getDirectoryPath,
-} from "../db/DirectoryRepository";
+
 import { moveToTrash } from "../core/directories/application/MoveToTrash";
 import * as EntryId from "../core/shared/domain/EntryId";
 import { BtnCreateNewFolder } from "../components/btn-create-new-folder";
 import { RowEntryActions } from "../components/row-entry-actions";
-import {
-  multiplex,
-  protect,
-  validateFormData,
-} from "../core/shared/infrastructure/RemixController";
 import { asyncFlow } from "../utils/asyncFlow";
 import { MimeIcon } from "../components/mime-icon";
+import { findDirectoryContents, getDirectoryPath } from "../core/shared/infrastructure/db/DirectoryRepository";
+import { withProtection } from "../core/shared/infrastructure/middlewares/withProtection";
+import { withMultiplexer } from "../core/shared/infrastructure/middlewares/withMultiplexer";
+import { withValidFormData } from "../core/shared/infrastructure/middlewares/withValidFormData";
 
 export const meta: MetaFunction = () => {
   return [
@@ -45,16 +41,16 @@ export const meta: MetaFunction = () => {
 };
 
 export const action = asyncFlow(
-  protect,
-  multiplex({
+  withProtection,
+  withMultiplexer({
     DELETE: asyncFlow(
-      validateFormData(
+      withValidFormData(
         z.object({
           entryId: z.uuid().transform(EntryId.cast),
         })
       ),
-      async ({ auth, data }) => {
-        await moveToTrash({ id: data.entryId, userId: auth.sub });
+      async ({ user, data }) => {
+        await moveToTrash({ id: data.entryId, userId: user.sub });
       }
     ),
   })

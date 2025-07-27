@@ -18,7 +18,7 @@ export async function findChildrenDirectories(id: string) {
 export async function findDirectoryContents(id: string) {
   const directories = await db.selectFrom('directories')
     .where('parent_id', '=', id)
-    .where('root', '=', false)
+    .whereRef('directories.id', '!=', 'directories.parent_id')
     .selectAll()
     .execute();
 
@@ -53,7 +53,7 @@ export async function getDirectoryPath(id: string) {
       .selectAll()
       .executeTakeFirst();
 
-    if (!directory || directory.root) break;
+    if (!directory || (directory.id === directory.parent_id)) break;
     path.unshift(directory);
     currentId = directory.parent_id;
   }

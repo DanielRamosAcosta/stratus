@@ -1,30 +1,33 @@
 import { LoaderFunctionArgs, redirect } from "@remix-run/node";
 import { sessionStorage } from "~/services/auth.server";
 import { oidcInstance } from "../services/oidc.server";
+import { saveFromUserInfo } from "../core/users/application/SaveFromUserInfo";
+import { OIDCClient } from "../core/shared/infrastructure/auth/OIDCClient";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  try {
-    const oidcClient = await oidcInstance();
-    const session = await sessionStorage.getSession(
-      request.headers.get("cookie")
-    );
+  const oidc = await OIDCClient.getInstance();
+  const session = await sessionStorage.getSession(
+    request.headers.get("cookie")
+  );
 
-    const tokens = await oidcClient.authorizationCodeGrant(
-      request.url,
-      session.get("code_verifier")
-    );
+  const tokens = await oidc.authorizationCodeGrant(
+    request.url,
+    session.get("code_verifier")
+  );
 
-    console.log("tokens", tokens);
+  console.log("tokens", tokens);
 
-    session.set("access_token", tokens.access_token);
+  session.set("access_token", tokens.access_token);
 
-    return redirect("/", {
-      headers: {
-        "Set-Cookie": await sessionStorage.commitSession(session),
-      },
-    });
-  } catch (error) {
-    console.error("Error during OIDC callback:", error);
-    throw error;
-  }
+  const introspection = await oidc.introspectToken(tokens.access_token);
+
+  await saveFromUserInfo({
+    userInfo: await oidc.getUserInfo(tokens.access_token, introspection.sub as string),
+  });
+
+  return redirect("/", {
+    headers: {
+      "Set-Cookie": await sessionStorage.commitSession(session),
+    },
+  });
 }

@@ -10,8 +10,8 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { RefreshCw, Database, HardDrive } from "lucide-react";
-import { findLatestRescan } from "../db/RescanRepository";
 import { isCompleted, isError, isRunning } from "../core/rescans/domain/rescan";
+import { findLatestRescan } from "../core/shared/infrastructure/db/RescanRepository";
 
 export default function AdministrationPage() {
   const { rescan } = useLoaderData<typeof loader>();

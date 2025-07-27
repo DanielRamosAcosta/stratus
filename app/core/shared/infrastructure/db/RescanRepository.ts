@@ -7,7 +7,7 @@ import {
   RescanStatusCompleted,
   RescanStatusError,
   RescanStatusRunning,
-} from "../core/rescans/domain/rescan";
+} from "../../../rescans/domain/rescan";
 import { db } from "./database";
 import { Directory, NewDirectory } from "./types";
 

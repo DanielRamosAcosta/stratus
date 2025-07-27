@@ -1,16 +1,11 @@
 import { Outlet } from "@remix-run/react";
-import { Search } from "lucide-react";
-import { Button } from "~/components/ui/button";
-import { useState } from "react";
 import {
   SidebarProvider,
   SidebarInset,
   SidebarTrigger,
 } from "~/components/ui/sidebar";
 import { AppSidebar } from "~/components/app-sidebar";
-import { PlatformShortcut, useShortcut } from "../providers/ShortcutProvider";
 import { AppCommand } from "../components/app-command";
-import { Shortcut } from "../components/shortcut";
 
 export default function DashboardLayout() {
   return (
