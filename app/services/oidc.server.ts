@@ -28,6 +28,7 @@ export const oidcInstance = async () => {
         console.log("buildAuthorizationUrl", url, config);
         const origin = new URL(url).origin;
         const codeVerifier: string = client.randomPKCECodeVerifier();
+        // client.tokenIntrospection()
 
         const parameters: Record<string, string> = {
           redirect_uri: new URL("/auth/callback", origin).toString(),
@@ -52,9 +53,18 @@ export const oidcInstance = async () => {
         console.log("authorizationCodeGrant", url, pkceCodeVerifier, config);
         const fullUrl = new URL(url);
         fullUrl.searchParams.delete("state");
-        return await client.authorizationCodeGrant(clientConfig, fullUrl, {
+
+        const tokens = await client.authorizationCodeGrant(clientConfig, fullUrl, {
           pkceCodeVerifier,
         });
+
+        const result = await client.tokenIntrospection(clientConfig, tokens.access_token)
+        console.log("introspection result", JSON.stringify(result, null, 2));
+
+        const userInfo = await client.fetchUserInfo(clientConfig, tokens.access_token, result.sub as string);
+        console.log("userInfo", JSON.stringify(userInfo, null, 2));
+
+        return tokens;
       },
     } satisfies OIDCClient;
   }
