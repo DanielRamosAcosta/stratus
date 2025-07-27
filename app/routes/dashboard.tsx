@@ -1,53 +1,28 @@
-import { Outlet, useNavigate } from "@remix-run/react";
-import { 
-  Search,
-  Command
-} from "lucide-react";
-import { Input } from "~/components/ui/input";
-import { useEffect, useRef, useState } from "react";
+import { Outlet } from "@remix-run/react";
+import { Search } from "lucide-react";
+import { Button } from "~/components/ui/button";
+import { useState } from "react";
 import {
   SidebarProvider,
   SidebarInset,
   SidebarTrigger,
 } from "~/components/ui/sidebar";
 import { AppSidebar } from "~/components/app-sidebar";
-
+import { PlatformShortcut, useShortcut } from "../providers/ShortcutProvider";
+import { AppCommand } from "../components/app-command";
+import { Shortcut } from "../components/shortcut";
 
 export default function DashboardLayout() {
-  const navigate = useNavigate();
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const [isMac, setIsMac] = useState(false);
+  const [open, setOpen] = useState(false);
 
-  // Detect if user is on Mac
-  useEffect(() => {
-    setIsMac(navigator.platform.toUpperCase().indexOf('MAC') >= 0);
-  }, []);
-
-  // Add keyboard shortcut for Cmd+K (search)
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
-        event.preventDefault();
-        searchInputRef.current?.focus();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
-
-  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const query = formData.get('query') as string;
-    
-    if (query.trim()) {
-      navigate(`/dashboard/search?query=${encodeURIComponent(query.trim())}`);
-    }
+  const shortcut: PlatformShortcut = {
+    mac: { meta: true, key: "k" },
+    other: { ctrl: true, key: "k" },
   };
+
+  useShortcut(shortcut, () => {
+    setOpen(true);
+  });
 
   return (
     <SidebarProvider>
@@ -58,28 +33,21 @@ export default function DashboardLayout() {
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <div className="flex flex-1 items-center justify-center">
-            <form onSubmit={handleSearch} className="relative max-w-md w-full">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                ref={searchInputRef}
-                name="query"
-                placeholder="Search in Stratus"
-                className="w-full pl-9 pr-12"
-                autoComplete="off"
-              />
-              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-                {isMac ? (
-                  <>
-                    <Command className="h-3 w-3" />
-                    <span className="text-xs">K</span>
-                  </>
-                ) : (
-                  'Ctrl+K'
-                )}
-              </kbd>
-            </form>
+            <Button
+              variant="outline"
+              className="relative max-w-md w-full justify-start text-sm text-muted-foreground shadow-none"
+              onClick={() => setOpen(true)}
+            >
+              <Search className="mr-2 h-4 w-4" />
+              <span>Search in Stratus...</span>
+              <div className="flex-1" />
+              <Shortcut shortcut={shortcut} />
+            </Button>
           </div>
         </header>
+
+        {/* Command Dialog */}
+        <AppCommand open={open} setOpen={setOpen} />
 
         {/* Page Content */}
         <div className="flex flex-1 flex-col gap-4">

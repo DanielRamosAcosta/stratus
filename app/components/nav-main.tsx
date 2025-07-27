@@ -1,52 +1,23 @@
 "use client";
 
 import {
-  ChevronRight,
-  Folder,
   HardDrive,
   Home,
   Users,
   Clock,
   Star,
   Trash2,
-  Settings,
 } from "lucide-react";
 
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "~/components/ui/collapsible";
 import {
   SidebarGroup,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from "~/components/ui/sidebar";
 import { Separator } from "./ui/separator";
-import { NavLink } from "@remix-run/react";
 
 export function NavMain() {
-  const item = {
-    items: [
-      {
-        title: "Documents",
-        url: "#",
-      },
-      {
-        title: "Images",
-        url: "#",
-      },
-      {
-        title: "Videos",
-        url: "#",
-      },
-    ],
-  };
-
   return (
     <SidebarGroup>
       <SidebarMenu>
@@ -58,42 +29,20 @@ export function NavMain() {
             </a>
           </SidebarMenuButton>
         </SidebarMenuItem>
-        <Collapsible defaultOpen={false} className="group/collapsible">
-          <SidebarMenuItem>
-            <div className="flex items-center">
-              <SidebarMenuButton asChild tooltip="My Drive" className="flex-1">
-                <a href="/dashboard/folders/343cbdbd-2160-4e50-8e05-5ea20dfe0e24">
-                  <HardDrive className="size-4" />
-                  <span>My Drive</span>
-                </a>
-              </SidebarMenuButton>
-              <CollapsibleTrigger asChild>
-                <SidebarMenuButton
-                  size="sm"
-                  className="w-8 h-8 p-0 flex items-center justify-center"
-                >
-                  <ChevronRight className="size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                </SidebarMenuButton>
-              </CollapsibleTrigger>
-            </div>
-            <CollapsibleContent>
-              <SidebarMenuSub>
-                {item.items?.map((subItem) => (
-                  <SidebarMenuSubItem key={subItem.title}>
-                    <SidebarMenuSubButton asChild>
-                      <a href={subItem.url}>
-                        <Folder className="size-4" />
-                        <span>{subItem.title}</span>
-                      </a>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                ))}
-              </SidebarMenuSub>
-            </CollapsibleContent>
-          </SidebarMenuItem>
-        </Collapsible>
         <SidebarMenuItem>
-          <SidebarMenuButton asChild tooltip="Shared with me" className="flex-1">
+          <SidebarMenuButton asChild tooltip="My Drive" className="flex-1">
+            <a href="/dashboard/folders/343cbdbd-2160-4e50-8e05-5ea20dfe0e24">
+              <HardDrive className="size-4" />
+              <span>My Drive</span>
+            </a>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            asChild
+            tooltip="Shared with me"
+            className="flex-1"
+          >
             <a href="/dashboard/folders/343cbdbd-2160-4e50-8e05-5ea20dfe0e24">
               <Users className="size-4" />
               <span>Shared with me</span>
