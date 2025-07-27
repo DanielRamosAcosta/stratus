@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: ghcr.io/danielramosacosta/stratus:0.0.1
     ports:
       - "5173:5173"
     environment:
