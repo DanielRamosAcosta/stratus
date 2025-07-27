@@ -15,6 +15,7 @@ export type DirectoryTable = {
   owner_id: string;
   parent_id: string;
   root: boolean;
+  last_modified_at: Date;
 };
 
 export type Directory = Selectable<DirectoryTable>;
@@ -26,6 +27,9 @@ export type FileTable = {
   name: string;
   owner_id: string;
   parent_id: string;
+  mime_type: string;
+  size: number;
+  last_modified_at: Date;
 };
 
 export type File = Selectable<FileTable>;

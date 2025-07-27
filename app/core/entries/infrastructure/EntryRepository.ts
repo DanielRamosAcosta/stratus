@@ -5,11 +5,13 @@ import * as FileId from "../../files/domain/FileId";
 import * as DirectoryId from "../../directories/domain/DirectoryId";
 
 export async function commandSearch(query: string): Promise<CommandEntry[]> {
+  console.log("Searching for entries with query:", query);  
+
   const data = await db
     .selectFrom("entries")
     .selectAll()
-    .orderBy(sql`levenshtein(name, ${query})`)
-    .limit(10)
+    .orderBy(sql`levenshtein(LOWER(name), LOWER(${query}))`)
+    .limit(5)
     .execute();
 
   const foo = data.map((entry): CommandEntry => {
@@ -35,6 +37,9 @@ export async function commandSearch(query: string): Promise<CommandEntry[]> {
 
     throw new Error(`Unknown entry type: ${entry.type}`);
   });
+
+  const names = foo.map((entry) => entry.name);
+  console.log("Search results:", names);
 
   return foo;
 }

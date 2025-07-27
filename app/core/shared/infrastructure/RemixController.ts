@@ -23,6 +23,8 @@ export async function protect({
 
   const content = jwt.decode(accessToken) as JwtPayload;
 
+  console.log("accessToken", accessToken);
+
   return {
     ...rest,
     request,

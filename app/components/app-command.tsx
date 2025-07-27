@@ -1,4 +1,5 @@
 import { useFetcher, useNavigate } from "@remix-run/react";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {
   Home,
   HardDrive,
@@ -8,36 +9,34 @@ import {
   Trash2,
   Settings,
   User,
-  Plus,
-  Upload,
   Search,
-  LogOut,
-  File,
-  Calendar,
-  Smile,
-  Calculator,
-  CreditCard,
   Folder,
-  CornerDownLeft,
 } from "lucide-react";
 import {
-  CommandShortcut,
   CommandDialog,
   CommandInput,
   CommandList,
   CommandEmpty,
   CommandGroup,
   CommandItem,
-  CommandSeparator,
+  CommandShortcut,
 } from "./ui/command";
-import { useState } from "react";
+import { ChangeEvent, useState } from "react";
 import { loader } from "../routes/dashboard.entries.search";
 import { Button } from "./ui/button";
 import { Shortcut } from "./shortcut";
 import { PlatformShortcut, useShortcut } from "../providers/ShortcutProvider";
 import { DialogTitle } from "./ui/dialog";
 import { DialogDescription } from "@radix-ui/react-dialog";
-import { set } from "zod";
+import { MimeIcon } from "./mime-icon";
+
+type CommandEntry = {
+  id: string;
+  name: string;
+  group: string;
+  icon: React.ReactNode;
+  onSelect: () => void;
+}
 
 export function AppCommand() {
   const shortcut: PlatformShortcut = {
@@ -50,13 +49,114 @@ export function AppCommand() {
   });
 
   const navigate = useNavigate();
+  const [query, setQuery] = useState("");
   const [commandOpen, setCommandOpen] = useState(false);
   const fetcher = useFetcher<typeof loader>();
 
   const handleSelect = (callback: () => void) => {
     callback();
     setCommandOpen(false);
+    setQuery("");
   };
+
+  const fixedCommandEntries: CommandEntry[] = [
+    {
+      id: "home",
+      name: "Home",
+      group: "Navigation",
+      icon: <Home className="mr-2 h-4 w-4" />,
+      onSelect: () => handleSelect(() => navigate("/dashboard/folders/343cbdbd-2160-4e50-8e05-5ea20dfe0e24")),
+    },
+    {
+      id: "my-drive",
+      name: "My Drive",
+      group: "Navigation",
+      icon: <HardDrive className="mr-2 h-4 w-4" />,
+      onSelect: () => handleSelect(() => navigate("/dashboard/folders/343cbdbd-2160-4e50-8e05-5ea20dfe0e24")),
+    },
+    {
+      id: "shared-with-me",
+      name: "Shared with me",
+      group: "Navigation",
+      icon: <Users className="mr-2 h-4 w-4" />,
+      onSelect: () => handleSelect(() => navigate("/dashboard/shared")),
+    },
+    {
+      id: "recent-files",
+      name: "Recent files",
+      group: "Navigation",
+      icon: <Clock className="mr-2 h-4 w-4" />,
+      onSelect: () => handleSelect(() => navigate("/dashboard/recent")),
+    },
+    {
+      id: "favourites",
+      name: "Favourites",
+      group: "Navigation",
+      icon: <Star className="mr-2 h-4 w-4" />,
+      onSelect: () => handleSelect(() => navigate("/dashboard/favourites")),
+    },
+    {
+      id: "trash",
+      name: "Trash",
+      group: "Navigation",
+      icon: <Trash2 className="mr-2 h-4 w-4" />,
+      onSelect: () => handleSelect(() => navigate("/dashboard/trash")),
+    },
+    {
+      id: "settings",
+      name: "Settings",
+      group: "Settings",
+      icon: <Settings className="mr-2 h-4 w-4" />,
+      onSelect: () => handleSelect(() => navigate("/dashboard/settings")),
+    },
+    {
+      id: "account-settings",
+      name: "Account settings",
+      group: "Settings",
+      icon: <User className="mr-2 h-4 w-4" />,
+      onSelect: () => handleSelect(() => navigate("/dashboard/account")),
+    },
+  ];
+
+  const fixedFilteredCommandEntries: CommandEntry[] = fixedCommandEntries.filter(
+    (entry) => {
+      return new RegExp(query, "i").test(entry.name)
+    }
+  );
+
+  const mappedEntries = (fetcher.data ?? []).map((item): CommandEntry => ({
+    id: item.id,
+    name: item.name,
+    group: "Files & Folders",
+    icon: item.type === "directory" ? (
+      <Folder className="mr-2 h-4 w-4" />
+    ) : (
+      <MimeIcon mimeType={item.mimeType} className="mr-2 h-4 w-4" />
+    ),
+    onSelect: () => handleSelect(() => {
+      if (item.type === "directory") {
+        navigate(`/dashboard/folders/${item.id}`);
+      }
+      if (item.type === "file") {
+        console.log(item, "Navigating to file");
+        navigate(`/dashboard/folders/${item.parentId}`);
+      }
+    }),
+  }));
+
+  const alllCommandEntries = [
+    ...fixedFilteredCommandEntries,
+    ...mappedEntries,
+  ];
+
+  const grouped = Object.groupBy(alllCommandEntries, (entry) => entry.group) as Record<
+    string,
+    CommandEntry[]
+  >;
+
+  const groupedArr = Object.entries(grouped)
+
+  console.log("Grouped command entries:", groupedArr); 
 
   console.log("Command fetcher data:", fetcher.data);
 
@@ -72,173 +172,41 @@ export function AppCommand() {
         <div className="flex-1" />
         <Shortcut shortcut={shortcut} />
       </Button>
-      <CommandDialog open={commandOpen} onOpenChange={setCommandOpen}>
-        <DialogTitle>Command Palette</DialogTitle>
-        <DialogDescription>
-          Quickly navigate the app or perform actions without using the mouse.
-        </DialogDescription>
+      <CommandDialog open={commandOpen} onOpenChange={setCommandOpen} shouldFilter={false}>
+        <VisuallyHidden>
+          <DialogTitle>Command Palette</DialogTitle>
+          <DialogDescription>
+            Quickly navigate the app or perform actions without using the mouse.
+          </DialogDescription>
+        </VisuallyHidden>
         <CommandInput
           placeholder="Type a command or search..."
-          onChangeCapture={(event) => {
-            // @ts-ignore
-            const path = "/dashboard/entries/search?search=" + encodeURIComponent(event.target.value)
-            console.log("Loading path:", path);
-            fetcher.load(
-              path
-            );
+          onChangeCapture={(event: ChangeEvent<HTMLInputElement>) => {
+            fetcher.submit({
+              search: event.target.value,
+            }, {
+              action: "/dashboard/entries/search",
+            });
+            setQuery(event.target.value);
           }}
         />
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup heading="Navigation">
-            <CommandItem
-              onSelect={() =>
-                handleSelect(() =>
-                  navigate(
-                    "/dashboard/folders/343cbdbd-2160-4e50-8e05-5ea20dfe0e24"
-                  )
-                )
-              }
-            >
-              <Home className="mr-2 h-4 w-4" />
-              <span>Home</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() =>
-                handleSelect(() =>
-                  navigate(
-                    "/dashboard/folders/343cbdbd-2160-4e50-8e05-5ea20dfe0e24"
-                  )
-                )
-              }
-            >
-              <HardDrive className="mr-2 h-4 w-4" />
-              <span>My Drive</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => handleSelect(() => navigate("/dashboard/shared"))}
-            >
-              <Users className="mr-2 h-4 w-4" />
-              <span>Shared with me</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => handleSelect(() => navigate("/dashboard/recent"))}
-            >
-              <Clock className="mr-2 h-4 w-4" />
-              <span>Recent files</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() =>
-                handleSelect(() => navigate("/dashboard/favourites"))
-              }
-            >
-              <Star className="mr-2 h-4 w-4" />
-              <span>Favourites</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => handleSelect(() => navigate("/dashboard/trash"))}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              <span>Trash</span>
-            </CommandItem>
-          </CommandGroup>
-
-          <CommandSeparator />
-
-          <CommandGroup heading="Settings">
-            <CommandItem
-              onSelect={() =>
-                handleSelect(() => navigate("/dashboard/account"))
-              }
-            >
-              <User className="mr-2 h-4 w-4" />
-              <span>Account settings</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() =>
-                handleSelect(() => navigate("/dashboard/administration"))
-              }
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Administration</span>
-            </CommandItem>
-          </CommandGroup>
-
-          <CommandSeparator />
-
-          <CommandGroup heading="Actions">
-            <CommandItem
-              onSelect={() =>
-                handleSelect(() => {
-                  // TODO: Implement create folder functionality
-                  console.log("Create new folder");
-                })
-              }
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              <span>New folder</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() =>
-                handleSelect(() => {
-                  // TODO: Implement upload files functionality
-                  console.log("Upload files");
-                })
-              }
-            >
-              <Upload className="mr-2 h-4 w-4" />
-              <span>Upload files</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => handleSelect(() => navigate("/auth/logout"))}
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Log out</span>
-            </CommandItem>
-          </CommandGroup>
-          <CommandGroup heading="Entries">
-            {fetcher.data?.map((item, i) => {
-              console.log("Mapping to item:", item);
-              if (item.type === "directory") {
-                return (
-                  <CommandItem
-                    key={item.id}
-                    onSelect={() => handleSelect(() => {
-                      navigate(`/dashboard/folders/${item.id}`);
-                    })}
-                  >
-                    <Folder className="mr-2 h-4 w-4" />
-                    <span>{item.name}</span>
-                    {i === 0 && (
-                      <CommandShortcut>
-                        <CornerDownLeft className="h-3 w-3" />
-                      </CommandShortcut>
-                    )}
-                  </CommandItem>
-                );
-              }
-              if (item.type === "file") {
-                return (
-                  <CommandItem
-                    key={item.id}
-                    onSelect={() => handleSelect(() => {
-                      navigate(`/dashboard/files/${item.parentId}`);
-                    })}
-                  >
-                    <File className="mr-2 h-4 w-4" />
-                    <span>{item.name}</span>
-                    {i === 0 && (
-                      <CommandShortcut>
-                        <CornerDownLeft className="h-3 w-3" />
-                      </CommandShortcut>
-                    )}
-                  </CommandItem>
-                );
-              }
-
-              throw new Error(`Unknown entry type: ${item.type}`);
-            })}
-          </CommandGroup>
+          {groupedArr.map(([group, entries], groupIndex) => (
+            <CommandGroup key={group} heading={group}>
+              {entries.map((entry, entryIndex) => (
+                <CommandItem
+                  key={entry.id}
+                  onSelect={() => {
+                    entry.onSelect();
+                  }}
+                >
+                  {entry.icon}
+                  <span>{entry.name}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          ))}
         </CommandList>
       </CommandDialog>
     </>

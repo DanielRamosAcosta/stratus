@@ -35,6 +35,7 @@ import {
   validateFormData,
 } from "../core/shared/infrastructure/RemixController";
 import { asyncFlow } from "../utils/asyncFlow";
+import { MimeIcon } from "../components/mime-icon";
 
 export const meta: MetaFunction = () => {
   return [
@@ -131,7 +132,8 @@ export default function FolderView() {
       case "directory":
         return <Folder className="h-4 w-4 text-blue-600 dark:text-blue-400" />;
       case "file":
-        return <File className="h-4 w-4 text-muted-foreground" />;
+        console.log(entry.mimeType, "File MIME type");
+        return <MimeIcon mimeType={entry.mimeType} className="h-4 w-4 text-muted-foreground" />;
       case "symlink":
         return (
           <Link className="h-4 w-4 text-purple-600 dark:text-purple-400" />
@@ -298,9 +300,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       id: dir.id,
       name: dir.name,
       ownerId: "dani",
-      lastModified: new Date(),
+      lastModified: dir.last_modified_at,
     })
   );
+
+  console.log("files", files)
 
   const fileEntries = files.map(
     (file): EntryFile => ({
@@ -308,9 +312,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       id: file.id,
       name: file.name,
       ownerId: "dani",
-      lastModified: new Date(),
-      size: 0,
-      mimeType: "text/plain",
+      lastModified: file.last_modified_at,
+      size: file.size,
+      mimeType: file.mime_type,
     })
   );
 
