@@ -3,7 +3,8 @@ import { sessionStorage } from "~/services/auth.server";
 import { oidcInstance } from "../services/oidc.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const oidcClient = await oidcInstance()
+  try {
+    const oidcClient = await oidcInstance()
   const session = await sessionStorage.getSession(request.headers.get("cookie"));
 
   const tokens = await oidcClient.authorizationCodeGrant(request.url, session.get("code_verifier"))
@@ -15,4 +16,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
       "Set-Cookie": await sessionStorage.commitSession(session),
     },
   });
+  } catch (error) {
+    console.error("Error during OIDC callback:", error);
+    throw error;
+  }
 }

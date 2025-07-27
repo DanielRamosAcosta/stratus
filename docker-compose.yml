@@ -1,4 +1,15 @@
 services:
+  stratus:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      OAUTH_BUTTON_TEXT: "Sign in with Dex"
+      OAUTH_ISSUER_URL: "https://dex:5556/dex/.well-known/openid-configuration"
+      OAUTH_CLIENT_ID: "stratus"
+      OAUTH_CLIENT_SECRET: "stratus-secret"
   dex:
     image: ghcr.io/dexidp/dex:v2.43.1-alpine
     ports:

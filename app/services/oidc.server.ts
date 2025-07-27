@@ -1,9 +1,10 @@
 import * as client from "openid-client";
+import { config } from "../core/shared/infrastructure/config";
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 type OIDCClient = {
-  buildAuthorizationUrl: () => Promise<{ url: string; codeVerifier: string }>;
+  buildAuthorizationUrl: (url: string) => Promise<{ url: string; codeVerifier: string }>;
   authorizationCodeGrant: (
     url: string,
     pkceCodeVerifier: string
@@ -14,39 +15,37 @@ let instance: OIDCClient | null = null;
 
 export const oidcInstance = async () => {
   if (!instance) {
-    const config: client.Configuration = await client.discovery(
-      new URL("https://localhost:5556/dex/.well-known/openid-configuration"),
-      "stratus",
-      "stratus-secret"
+    const clientConfig: client.Configuration = await client.discovery(
+      new URL(config.OAUTH_ISSUER_URL),
+      config.OAUTH_CLIENT_ID,
+      config.OAUTH_CLIENT_SECRET
     );
 
-    const redirect_uri = "http://localhost:5173/auth/callback";
-    const scope = "openid email profile groups";
-
     instance = {
-      buildAuthorizationUrl: async () => {
-        const code_verifier: string = client.randomPKCECodeVerifier();
-        const code_challenge: string = await client.calculatePKCECodeChallenge(
-          code_verifier
-        );
-
-        const redirectTo = client.buildAuthorizationUrl(config, {
-          redirect_uri,
-          scope,
-          code_challenge,
+      buildAuthorizationUrl: async (url: string) => {
+        console.log("buildAuthorizationUrl", url, config);
+        const origin = new URL(url).origin;
+        const codeVerifier: string = client.randomPKCECodeVerifier();
+        const redirectTo = client.buildAuthorizationUrl(clientConfig, {
+          redirect_uri: new URL("/auth/callback", origin).toString(),
+          scope: config.OAUTH_SCOPE,
+          code_challenge: await client.calculatePKCECodeChallenge(
+          codeVerifier
+        ),
           code_challenge_method: "S256",
         });
 
         return {
           url: redirectTo.toString(),
-          codeVerifier: code_verifier,
+          codeVerifier,
         };
       },
 
       authorizationCodeGrant: async (url, pkceCodeVerifier) => {
+        console.log("authorizationCodeGrant", url, pkceCodeVerifier, config);
         const fullUrl = new URL(url);
         fullUrl.searchParams.delete("state");
-        return await client.authorizationCodeGrant(config, fullUrl, {
+        return await client.authorizationCodeGrant(clientConfig, fullUrl, {
           pkceCodeVerifier,
         });
       },

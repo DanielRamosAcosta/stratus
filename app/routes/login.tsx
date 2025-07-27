@@ -75,7 +75,7 @@ export async function action({ request }: LoginActionArgs) {
   try {
     const oidcClient = await oidcInstance()
 
-    const { url, codeVerifier } = await oidcClient.buildAuthorizationUrl();
+    const { url, codeVerifier } = await oidcClient.buildAuthorizationUrl(request.url);
 
     session.set("code_verifier", codeVerifier);
 
@@ -85,6 +85,7 @@ export async function action({ request }: LoginActionArgs) {
       },
     });
   } catch (error) {
+    console.error("Error during OIDC authentication:", error);
     session.flash("error", "Invalid username/password");
 
     // Redirect back to the login page with errors.

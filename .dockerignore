@@ -1,0 +1,19 @@
+# Exclude everything by default
+*
+
+# Include essential directories and files
+!app/
+!public/
+!package.json
+!package-lock.json
+!vite.config.ts
+!tsconfig.json
+!tailwind.config.ts
+!postcss.config.js
+!components.json
+
+# Exclude specific files/folders even within included directories
+app/**/*.test.ts
+app/**/*.test.tsx
+app/**/*.spec.ts
+app/**/*.spec.tsx
