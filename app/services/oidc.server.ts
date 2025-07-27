@@ -57,10 +57,13 @@ export const oidcInstance = async () => {
         const tokens = await client.authorizationCodeGrant(clientConfig, fullUrl, {
           pkceCodeVerifier,
         });
+        console.log("tokens", JSON.stringify(tokens, null, 2));
 
+        console.log("going to perform token introspection");
         const result = await client.tokenIntrospection(clientConfig, tokens.access_token)
         console.log("introspection result", JSON.stringify(result, null, 2));
 
+        console.log("going to fetch user info");
         const userInfo = await client.fetchUserInfo(clientConfig, tokens.access_token, result.sub as string);
         console.log("userInfo", JSON.stringify(userInfo, null, 2));
 
