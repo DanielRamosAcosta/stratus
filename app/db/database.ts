@@ -1,14 +1,15 @@
 import { Database } from './types' // this is the Database interface we defined earlier
 import { Pool } from 'pg'
 import { Kysely, PostgresDialect } from 'kysely'
+import { config } from '../core/shared/infrastructure/config'
 
 const dialect = new PostgresDialect({
   pool: new Pool({
-    database: 'stratus',
-    host: 'localhost',
-    user: 'stratus',
-    password: 'password',
-    port: 5432,
+    database: config.DB_DATABASE_NAME,
+    host: config.DB_HOSTNAME,
+    user: config.DB_USERNAME,
+    password: config.DB_PASSWORD,
+    port: config.DB_PORT,
     max: 10,
   })
 })
