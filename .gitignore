@@ -10,3 +10,4 @@ node_modules
 /playwright/.cache/
 
 docker/minio/.minio.sys/
+.idea

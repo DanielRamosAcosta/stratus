@@ -1,35 +1,23 @@
-// app/routes/login.tsx or equivalent route file
-import { redirect } from "react-router";
-import { data } from "@remix-run/node";
-import { sessionStorage } from "~/services/auth.server";
-import { oidcInstance } from "../services/oidc.server";
+import {redirect} from "react-router";
+import {ActionFunctionArgs, data, LoaderFunctionArgs} from "@remix-run/node";
+import {sessionStorage} from "~/services/auth.server";
+import {Button} from "~/components/ui/button";
+import {Card, CardContent, CardHeader, CardTitle} from "~/components/ui/card";
+import {config} from "~/core/shared/infrastructure/config";
+import {Form, useLoaderData} from "@remix-run/react";
+import {OIDCClient} from "~/core/shared/infrastructure/auth/OIDCClient";
 
-import { Button } from "../components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 
-// Import this from correct place for your route
-type LoginProps = {
-  actionData?: { error?: string };
-};
+export default function Component() {
+  const { oauthButtonText, error } = useLoaderData<typeof loader>();
 
-type LoginActionArgs = {
-  request: Request;
-};
-
-type LoginLoaderArgs = {
-  request: Request;
-};
-
-// First we create our UI with the form doing a POST and the inputs with
-// the names we are going to use in the strategy
-export default function Component({ actionData }: LoginProps) {
   return (
     <div className="min-h-screen flex">
       {/* Left side - Gray background with quote */}
       <div className="flex-1 bg-muted/30 flex flex-col justify-end p-8">
         <div className="max-w-md">
           <blockquote className="text-sm text-muted-foreground leading-relaxed">
-            "On behalf of the future, I ask you of the past to leave us alone. You are not welcome among us. You have no sovereignty where we gather."
+            {'"On behalf of the future, I ask you of the past to leave us alone. You are not welcome among us. You have no sovereignty where we gather."'}
           </blockquote>
           <footer className="mt-4 text-xs text-muted-foreground">
             <cite>John Perry Barlow, co-founder of the nonprofit Electronic Frontier Foundation</cite>
@@ -42,23 +30,20 @@ export default function Component({ actionData }: LoginProps) {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Log or Sign in</CardTitle>
-            <CardDescription>
-              Sign in with Dex
-            </CardDescription>
           </CardHeader>
           
           <CardContent>
-            {actionData?.error ? (
+            {error ? (
               <div className="bg-destructive/15 border border-destructive text-destructive px-4 py-3 rounded mb-4">
-                {actionData.error}
+                {error}
               </div>
             ) : null}
 
-            <form method="post">
+            <Form method="post">
               <Button type="submit" className="w-full">
-                Sign in with Dex
+                {oauthButtonText}
               </Button>
-            </form>
+            </Form>
           </CardContent>
         </Card>
       </div>
@@ -66,41 +51,25 @@ export default function Component({ actionData }: LoginProps) {
   );
 }
 
-// Second, we need to export an action function, here we will use the
-// `authenticator.authenticate` method
-export async function action({ request }: LoginActionArgs) {
-  console.log("Login action called");
-  let session = await sessionStorage.getSession(request.headers.get("cookie"));
+export async function action({ request }: ActionFunctionArgs) {
+  const session = await sessionStorage.getSession(request.headers.get("cookie"));
 
-  try {
-    const oidcClient = await oidcInstance()
+  const oidc = await OIDCClient.getInstance();
 
-    const { url, codeVerifier } = await oidcClient.buildAuthorizationUrl(request.url);
+  const {url, codeVerifier} = await oidc.buildAuthorizationUrl(request.url);
 
-    session.set("code_verifier", codeVerifier);
+  session.set("code_verifier", codeVerifier);
 
-    return redirect(url, {
-      headers: {
-        "Set-Cookie": await sessionStorage.commitSession(session),
-      },
-    });
-  } catch (error) {
-    console.error("Error during OIDC authentication:", error);
-    session.flash("error", "Invalid username/password");
-
-    // Redirect back to the login page with errors.
-    return redirect("/login", {
-      headers: {
-        "Set-Cookie": await sessionStorage.commitSession(session),
-      },
-    });
-  }
+  return redirect(url, {
+    headers: {
+      "Set-Cookie": await sessionStorage.commitSession(session),
+    },
+  });
 }
 
-
-export async function loader({ request }: LoginLoaderArgs) {
-  let session = await sessionStorage.getSession(request.headers.get("cookie"));
-  let accessToken = session.get("access_token");
-  if (accessToken) return redirect("/");
-  return data(null);
+export async function loader({ request }: LoaderFunctionArgs) {
+  const session = await sessionStorage.getSession(request.headers.get("cookie"));
+  const accessToken = session.get("access_token");
+  if (accessToken) throw redirect("/");
+  return data({ oauthButtonText: config.OAUTH_BUTTON_TEXT, error: session.get("error") });
 }

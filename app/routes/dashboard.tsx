@@ -1,11 +1,10 @@
-import { Outlet } from "@remix-run/react";
-import {
-  SidebarProvider,
-  SidebarInset,
-  SidebarTrigger,
-} from "~/components/ui/sidebar";
-import { AppSidebar } from "~/components/app-sidebar";
-import { AppCommand } from "../components/app-command";
+import {Outlet} from "@remix-run/react";
+import {SidebarInset, SidebarProvider, SidebarTrigger,} from "~/components/ui/sidebar";
+import {AppSidebar} from "~/components/app-sidebar";
+import {AppCommand} from "../components/app-command";
+import {withProtection} from "~/core/shared/infrastructure/middlewares/withProtection";
+import {asyncFlow} from "~/utils/asyncFlow";
+import {withNoop} from "~/core/shared/infrastructure/middlewares/withNoop";
 
 export default function DashboardLayout() {
   return (
@@ -31,3 +30,8 @@ export default function DashboardLayout() {
     </SidebarProvider>
   );
 }
+
+export const loader = asyncFlow(
+  withProtection,
+  withNoop
+)
