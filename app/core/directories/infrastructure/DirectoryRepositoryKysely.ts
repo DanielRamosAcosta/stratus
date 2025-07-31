@@ -24,15 +24,31 @@ function toDomain(values: DirectoryTable): Directory {
   };
 }
 
-export async function getRootFor(
+export async function getRootOf(
   userId: UserId.UserId
 ): Promise<Directory | undefined> {
   const value = await db
     .selectFrom("directories")
     .where("owner_id", "=", userId)
     .whereRef("directories.id", "=", "directories.parent_id")
+    .where("name", "like", "%root")
     .selectAll()
     .executeTakeFirst();
+
+  if (!value) return undefined;
+  return toDomain(value);
+}
+
+export async function getTrashOf(
+    userId: UserId.UserId
+): Promise<Directory | undefined> {
+  const value = await db
+  .selectFrom("directories")
+  .where("owner_id", "=", userId)
+  .whereRef("directories.id", "=", "directories.parent_id")
+  .where("name", "like", "%trash")
+  .selectAll()
+  .executeTakeFirst();
 
   if (!value) return undefined;
   return toDomain(value);
@@ -46,4 +62,15 @@ export async function save(directory: Directory): Promise<void> {
     .values(directoryTable)
     .onConflict((oc) => oc.column("id").doUpdateSet(directoryTable))
     .execute();
+}
+
+export async function findBy(directoryId: DirectoryId.DirectoryId): Promise<Directory | undefined> {
+  const value = await db
+  .selectFrom("directories")
+  .where("id", "=", directoryId)
+  .selectAll()
+  .executeTakeFirst();
+
+  if (!value) return undefined;
+  return toDomain(value);
 }

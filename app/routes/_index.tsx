@@ -1,13 +1,17 @@
-import { redirect } from "@remix-run/node";
-import { asyncFlow } from "../utils/asyncFlow";
-import { withProtection } from "../core/shared/infrastructure/middlewares/withProtection";
-import { getRootOf } from "../core/entries/infrastructure/EntryRepository";
-import { populateFiles } from "../utils/populate";
+import {redirect} from "@remix-run/node";
+import {asyncFlow} from "~/utils/asyncFlow";
+import {withProtection} from "~/core/shared/infrastructure/middlewares/withProtection";
+import {directoryRepository} from "~/core/directories/infrastructure";
 
 export const loader = asyncFlow(
   withProtection,
   async ({ user }) => {
-    const rootDirectoryId = await getRootOf(user.sub);
-    throw redirect(`/dashboard/folders/${rootDirectoryId}`);
+    const root = await directoryRepository.getRootOf(user.sub);
+
+    if (!root) {
+      throw new Error("User does not have root, has it been intialized?")
+    }
+
+    throw redirect(`/dashboard/folders/${root.id}`);
   }
 )

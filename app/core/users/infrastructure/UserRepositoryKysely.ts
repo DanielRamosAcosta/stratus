@@ -16,18 +16,6 @@ function fromDomain(user: User): UserTable {
   };
 }
 
-function toDomain(userTable: UserTable): User {
-  return {
-    id: UserId.cast(userTable.id),
-    name: userTable.name,
-    email: userTable.email,
-    givenName: userTable.given_name ?? undefined,
-    familyName: userTable.family_name ?? undefined,
-    picture: userTable.picture ?? undefined,
-    groups: userTable.groups,
-  };
-}
-
 export async function save(user: User): Promise<void> {
   const userTable = fromDomain(user);
 

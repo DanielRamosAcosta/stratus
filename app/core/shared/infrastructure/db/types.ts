@@ -52,7 +52,7 @@ export type RescanErrorTable = {
   finished_at: Date;
 };
 
-export type EntryTable = {
+export type EntryView = {
   id: string;
   name: string;
   parent_id: string;
@@ -68,5 +68,5 @@ export interface Database {
   rescans_running: RescanRunningTable;
   rescans_completed: RescanCompletedTable;
   rescans_error: RescanErrorTable;
-  entries: EntryTable;
+  entries: EntryView;
 }

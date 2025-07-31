@@ -11,7 +11,7 @@ import {
 } from "~/components/ui/card";
 import { RefreshCw, Database, HardDrive } from "lucide-react";
 import { isCompleted, isError, isRunning } from "../core/rescans/domain/rescan";
-import { findLatestRescan } from "../core/shared/infrastructure/db/RescanRepository";
+import { findLatestRescan } from "../core/rescans/infrastructure/RescanRepositoryKysely";
 
 export default function AdministrationPage() {
   const { rescan } = useLoaderData<typeof loader>();

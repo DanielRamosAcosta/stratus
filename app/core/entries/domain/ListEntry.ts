@@ -1,3 +1,5 @@
+import { UserId } from "../../users/domain/UserId";
+
 export type PathSegment = {
   id: string;
   name: string;
@@ -6,10 +8,10 @@ export type PathSegment = {
 export type DirectoryPath = PathSegment[];
 
 export type UserListEntry = {
-  id: string;
+  id: UserId;
   name: string;
   picture?: string;
-}
+};
 
 export type ListEntryDirectory = {
   id: string;
@@ -32,7 +34,15 @@ export type ListEntryFile = {
 export type ListEntrySymlink = {
   id: string;
   type: "symlink";
-  name: string
+  name: string;
 };
 
 export type ListEntry = ListEntryDirectory | ListEntryFile | ListEntrySymlink;
+
+export type ListEntryResponse = {
+  path: DirectoryPath;
+  entries: ListEntry[];
+  owner: {
+    id: UserId;
+  };
+};

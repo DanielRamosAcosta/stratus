@@ -1,6 +1,4 @@
-import { Identifier } from "../../shared/domain/Identifier";
-
-export type UserId = Identifier<"UserId">;
+import {UserId} from "./UserId";
 
 export type User = {
   id: UserId;

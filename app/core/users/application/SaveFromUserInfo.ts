@@ -1,8 +1,9 @@
 import { OidcUserInfo } from "../domain/User";
 import * as User from "../domain/User";
 import * as Directory from "../../directories/domain/Directory";
-import * as DirectoryRepository from "../../directories/infrastructure/DirectoryRepository";
-import * as UserRepository from "../infrastructure/UserRepositoryArangoDB";
+import * as DirectoryRepository from "../../directories/infrastructure/DirectoryRepositoryKysely";
+import {userRepository} from "../infrastructure";
+import {createInitialDirectories} from "~/core/directories/application/CreateInitialDirectories";
 
 export async function saveFromUserInfo({
   userInfo,
@@ -10,7 +11,6 @@ export async function saveFromUserInfo({
   userInfo: OidcUserInfo;
 }): Promise<void> {
   const user = User.fromOidc(userInfo);
-  await UserRepository.save(user);
-  const root = await DirectoryRepository.getRootFor(user.id) ?? Directory.createRoot(user.id)
-  await DirectoryRepository.save(root)
+  await userRepository.save(user);
+  await createInitialDirectories({ triggeredBy: user.id })
 }

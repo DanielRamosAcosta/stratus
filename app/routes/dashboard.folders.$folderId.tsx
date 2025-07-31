@@ -1,49 +1,26 @@
-import type { MetaFunction } from "@remix-run/node";
-import { data, redirect } from "@remix-run/node";
-import { useLoaderData, useNavigate } from "@remix-run/react";
-import { z } from "zod";
-import { Folder, File, Link, Upload, Grid3X3, List } from "lucide-react";
-import { Button } from "~/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "~/components/ui/breadcrumb";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "~/components/ui/table";
-
-import { moveToTrash } from "../core/directories/application/MoveToTrash";
+import type {MetaFunction} from "@remix-run/node";
+import {data, redirect} from "@remix-run/node";
+import {useLoaderData, useNavigate} from "@remix-run/react";
+import {z} from "zod";
+import {File, Folder, Grid3X3, Link, List, Upload} from "lucide-react";
+import {Button} from "~/components/ui/button";
+import {Avatar, AvatarFallback, AvatarImage} from "~/components/ui/avatar";
+import {Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator,} from "~/components/ui/breadcrumb";
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from "~/components/ui/table";
+import {moveToTrash} from "~/core/directories/application/MoveToTrash";
 import * as EntryId from "../core/shared/domain/EntryId";
-import { BtnCreateNewFolder } from "../components/btn-create-new-folder";
-import { RowEntryActions } from "../components/row-entry-actions";
-import { asyncFlow } from "../utils/asyncFlow";
-import { MimeIcon } from "../components/mime-icon";
-import { withProtection } from "../core/shared/infrastructure/middlewares/withProtection";
-import { withMultiplexer } from "../core/shared/infrastructure/middlewares/withMultiplexer";
-import { withValidFormData } from "../core/shared/infrastructure/middlewares/withValidFormData";
-import { listEntriesOf } from "../core/entries/infrastructure/EntryRepository";
+import {BtnCreateNewFolder} from "~/components/btn-create-new-folder";
+import {RowEntryActions} from "~/components/row-entry-actions";
+import {asyncFlow} from "~/utils/asyncFlow";
+import {MimeIcon} from "~/components/mime-icon";
+import {withProtection} from "~/core/shared/infrastructure/middlewares/withProtection";
+import {withMultiplexer} from "~/core/shared/infrastructure/middlewares/withMultiplexer";
+import {withValidFormData} from "~/core/shared/infrastructure/middlewares/withValidFormData";
+import {entryRepository} from "~/core/entries/infrastructure";
 import * as DirectoryId from "../core/directories/domain/DirectoryId";
-import {
-  ListEntry,
-} from "../core/entries/domain/ListEntry";
-import { withValidParams } from "../core/shared/infrastructure/middlewares/withValidParams";
+import {ListEntry,} from "~/core/entries/domain/ListEntry";
+import {withValidParams} from "~/core/shared/infrastructure/middlewares/withValidParams";
 
-export const meta: MetaFunction = () => {
-  return [
-    { title: "Stratus - My Drive" },
-    { name: "description", content: "File storage and management" },
-  ];
-};
 
 export const action = asyncFlow(
   withProtection,
@@ -60,6 +37,37 @@ export const action = asyncFlow(
     ),
   })
 );
+
+export const loader = asyncFlow(
+    withProtection,
+    withValidParams(
+        z.object({
+          folderId: z.string().transform(DirectoryId.cast),
+        })
+    ),
+    async ({ user, params }) => {
+      const { path, entries, owner } = await entryRepository.listEntriesOf(params.folderId);
+
+      if (owner.id !== user.sub) {
+        throw redirect(`/error/not-owner`);
+      }
+
+      return data({
+        folderId: DirectoryId.cast(params.folderId),
+        path,
+        entries,
+      });
+    }
+);
+
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Stratus - My Drive" },
+    { name: "description", content: "File storage and management" },
+  ];
+};
+
 
 export default function FolderView() {
   const loaderData = useLoaderData<typeof loader>();
@@ -257,24 +265,3 @@ export default function FolderView() {
   );
 }
 
-export const loader = asyncFlow(
-  withProtection,
-  withValidParams(
-    z.object({
-      folderId: z.string().transform(DirectoryId.cast),
-    })
-  ),
-  async ({ user, params }) => {
-    const { path, entries, owner } = await listEntriesOf(params.folderId);
-
-    if (owner.id !== user.sub) {
-      throw redirect(`/error/not-owner`);
-    }
-
-    return data({
-      folderId: DirectoryId.cast(params.folderId),
-      path,
-      entries,
-    });
-  }
-);

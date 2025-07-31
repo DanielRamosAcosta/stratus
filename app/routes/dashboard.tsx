@@ -4,9 +4,11 @@ import {AppSidebar} from "~/components/app-sidebar";
 import {AppCommand} from "../components/app-command";
 import {withProtection} from "~/core/shared/infrastructure/middlewares/withProtection";
 import {asyncFlow} from "~/utils/asyncFlow";
-import {withNoop} from "~/core/shared/infrastructure/middlewares/withNoop";
 import { fromOidc, toSidebarUser } from "../core/users/domain/User";
-import { getRootOf, getTrashOf } from "../core/entries/infrastructure/EntryRepository";
+import { entryRepository } from "../core/entries/infrastructure";
+import {directoryRepository} from "~/core/directories/infrastructure";
+import {getRootDirectoryId} from "~/core/directories/application/GetRootDirectory";
+import {getTrashDirectoryId} from "~/core/directories/application/GetTrashDirectory";
 
 export default function DashboardLayout() {
   const {user, rootDirectoryId, trashDirectoryId} = useLoaderData<typeof loader>();
@@ -40,8 +42,8 @@ export const loader = asyncFlow(
   async ({ user }) => {
     return data({
       user: toSidebarUser(fromOidc(user)),
-      rootDirectoryId: await getRootOf(user.sub),
-      trashDirectoryId: await getTrashOf(user.sub)
+      rootDirectoryId: await getRootDirectoryId({userId: user.sub}),
+      trashDirectoryId: await getTrashDirectoryId({userId: user.sub})
     });
   }
 )

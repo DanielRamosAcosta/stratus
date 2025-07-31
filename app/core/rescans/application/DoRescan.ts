@@ -1,8 +1,8 @@
-import { setTimeout } from "node:timers/promises";
-import { catchError, complete, launch } from "../domain/rescan";
-import { RescanId } from "../domain/RescanId";
-import { UserId } from "../../users/domain/User";
-import { save } from "../../shared/infrastructure/db/RescanRepository";
+import {setTimeout} from "node:timers/promises";
+import * as Rescan from "../domain/rescan";
+import {RescanId} from "../domain/RescanId";
+import {save} from "../infrastructure/RescanRepositoryKysely";
+import {UserId} from "~/core/users/domain/UserId";
 
 export const doRescan = async ({
   id = crypto.randomUUID() as RescanId,
@@ -15,7 +15,7 @@ export const doRescan = async ({
 
   const totalFiles = Math.floor(Math.random() * (1000 - 700 + 1)) + 700;
 
-  const rescan = launch({ ownerId: triggeredBy, totalFiles });
+  const rescan = Rescan.launch({ ownerId: triggeredBy, totalFiles });
   await save(rescan);
 
   Promise.resolve()
@@ -27,9 +27,9 @@ export const doRescan = async ({
       }
     })
     .then(() => {
-      return save(complete(rescan));
+      return save(Rescan.complete(rescan));
     })
     .catch((error) => {
-      return save(catchError(rescan, error));
+      return save(Rescan.catchError(rescan, error));
     });
 };
