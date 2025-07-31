@@ -30,7 +30,7 @@ export async function getRootOf(
   const value = await db
     .selectFrom("directories")
     .where("owner_id", "=", userId)
-    .whereRef("directories.id", "=", "directories.parent_id")
+    .where("parent_id", "is", null)
     .where("name", "like", "%root")
     .selectAll()
     .executeTakeFirst();
@@ -45,7 +45,7 @@ export async function getTrashOf(
   const value = await db
   .selectFrom("directories")
   .where("owner_id", "=", userId)
-  .whereRef("directories.id", "=", "directories.parent_id")
+  .where("parent_id", "is", null)
   .where("name", "like", "%trash")
   .selectAll()
   .executeTakeFirst();

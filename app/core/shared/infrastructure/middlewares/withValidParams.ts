@@ -1,4 +1,4 @@
-import { Params } from "@remix-run/react";
+import {Params} from "@remix-run/react";
 import z from "zod";
 
 export function withValidParams<T extends z.ZodSchema>(schema: T) {
@@ -17,8 +17,6 @@ export function withValidParams<T extends z.ZodSchema>(schema: T) {
         },
       });
     }
-
-    console.log("Parsed params:", parsed.data);
 
     return {
       ...rest,

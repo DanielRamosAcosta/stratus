@@ -165,10 +165,6 @@ export function AppCommand() {
 
   const groupedArr = Object.entries(grouped)
 
-  console.log("Grouped command entries:", groupedArr); 
-
-  console.log("Command fetcher data:", fetcher.data);
-
   return (
     <>
       <Button

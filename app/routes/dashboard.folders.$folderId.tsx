@@ -139,16 +139,20 @@ export default function FolderView() {
                   pathToSegment[pathToSegment.length - 1].id
                 }`;
 
+                const name = index === 0 ? "My Drive" : segment.name
+
                 return [
                   index > 0 && (
                     <BreadcrumbSeparator key={`sep-${segment.id}`} />
                   ),
                   <BreadcrumbItem key={`item-${segment.id}`}>
                     {index === loaderData.path.length - 1 ? (
-                      <BreadcrumbPage>{segment.name}</BreadcrumbPage>
+                      <BreadcrumbPage>
+                        {name}
+                      </BreadcrumbPage>
                     ) : (
                       <BreadcrumbLink href={href}>
-                        {segment.name}
+                        {name}
                       </BreadcrumbLink>
                     )}
                   </BreadcrumbItem>,

@@ -1,18 +1,6 @@
-"use client";
-
-import { NavLink } from "@remix-run/react";
-import {
-  BadgeCheck,
-  Bell,
-  ChevronsUpDown,
-  CreditCard,
-  LogOut,
-  Sparkles,
-  Settings,
-  Shield,
-} from "lucide-react";
-
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import {NavLink} from "@remix-run/react";
+import {BadgeCheck, ChevronsUpDown, LogOut, Settings, Shield,} from "lucide-react";
+import {Avatar, AvatarFallback, AvatarImage} from "~/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,13 +10,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "~/components/ui/sidebar";
-import { SidebarUser } from "../core/users/domain/User";
+import {SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar,} from "~/components/ui/sidebar";
+import {SidebarUser} from "~/core/users/domain/User";
 
 export function NavUser({
   user,
@@ -36,7 +19,6 @@ export function NavUser({
   user: SidebarUser;
 }) {
   const { isMobile } = useSidebar();
-  console.log("NavUser", user);
 
   return (
     <SidebarMenu>

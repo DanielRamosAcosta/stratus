@@ -56,10 +56,9 @@ export type EntryView = {
   id: string;
   name: string;
   parent_id: string;
-} & (
-  | { type: "directory" }
-  | { type: "file"; mime_type: string }
-)
+  type: "directory" | "file"
+  mime_type?: string
+}
 
 export interface Database {
   directories: DirectoryTable;

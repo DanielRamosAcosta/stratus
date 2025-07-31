@@ -21,8 +21,6 @@ export async function withActiveToken<T extends { request: Request, accessToken:
         "Set-Cookie": await sessionStorage.destroySession(session),
       },
     });
-  } else {
-    console.log("Access token is active");
   }
   
   return {
