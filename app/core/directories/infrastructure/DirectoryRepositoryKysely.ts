@@ -1,6 +1,6 @@
 import { db } from "../../shared/infrastructure/db/database";
 import { DirectoryTable } from "../../shared/infrastructure/db/types";
-import { Directory } from "../domain/Directory";
+import { Directory, isNormalDirectory } from "../domain/Directory";
 import * as DirectoryId from "../domain/DirectoryId";
 import * as UserId from "../../users/domain/UserId";
 
@@ -8,7 +8,7 @@ function fromDomain(directory: Directory): DirectoryTable {
   return {
     id: directory.id,
     name: directory.name,
-    parent_id: directory.parentId,
+    parent_id: isNormalDirectory(directory) ? directory.parentId : undefined,
     owner_id: directory.ownerId,
     last_modified_at: directory.lastModifiedAt,
   };
@@ -18,7 +18,7 @@ function toDomain(values: DirectoryTable): Directory {
   return {
     id: DirectoryId.cast(values.id),
     name: values.name,
-    parentId: DirectoryId.cast(values.parent_id),
+    parentId: values.parent_id ? DirectoryId.cast(values.parent_id) : undefined,
     ownerId: UserId.cast(values.owner_id),
     lastModifiedAt: values.last_modified_at,
   };

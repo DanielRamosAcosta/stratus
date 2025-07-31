@@ -5,7 +5,7 @@ export type DirectoryTable = {
   id: string;
   name: string;
   owner_id: string;
-  parent_id: string;
+  parent_id?: string;
   last_modified_at: Date;
 };
 

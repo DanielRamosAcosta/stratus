@@ -1,7 +1,9 @@
-import {UserId} from "~/core/users/domain/UserId";
+import { UserId } from "~/core/users/domain/UserId";
 import * as DirectoryId from "./DirectoryId";
 
-export type Directory = {
+export type Directory = NormalDirectory | RootDirectory;
+
+export type NormalDirectory = {
   id: DirectoryId.DirectoryId;
   name: string;
   parentId: DirectoryId.DirectoryId;
@@ -9,12 +11,27 @@ export type Directory = {
   lastModifiedAt: Date;
 };
 
+export type RootDirectory = {
+  id: DirectoryId.DirectoryId;
+  name: string;
+  ownerId: UserId;
+  lastModifiedAt: Date;
+};
+
+export function isRootDirectory(directory: Directory): directory is RootDirectory {
+  return ("parentId" in directory) === false;
+}
+
+export function isNormalDirectory(directory: Directory): directory is NormalDirectory {
+  return ("parentId" in directory) === true;
+}
+
 export function create({
-                         id,
-                         name,
-                         parentId,
-                         ownerId
-                       }: {
+  id,
+  name,
+  parentId,
+  ownerId,
+}: {
   id: DirectoryId.DirectoryId;
   name: string;
   parentId: DirectoryId.DirectoryId;
@@ -25,42 +42,42 @@ export function create({
     name,
     parentId,
     ownerId,
-    lastModifiedAt: new Date()
-  }
+    lastModifiedAt: new Date(),
+  };
 }
 
 export function createRoot({
-                             id = DirectoryId.randomDirectoryId(),
-                             ownerId
-                           }: {
-  id?: DirectoryId.DirectoryId
-  ownerId: UserId
-}): Directory {
+  id = DirectoryId.randomDirectoryId(),
+  ownerId,
+}: {
+  id?: DirectoryId.DirectoryId;
+  ownerId: UserId;
+}): RootDirectory {
   return {
     id,
     name: `${ownerId}-root`,
-    parentId: id,
     ownerId,
     lastModifiedAt: new Date(),
   };
 }
 
 export function createTrash({
-                              id = DirectoryId.randomDirectoryId(),
-                              ownerId
-                            }: {
-  id?: DirectoryId.DirectoryId
-  ownerId: UserId
-}): Directory {
+  id = DirectoryId.randomDirectoryId(),
+  ownerId,
+}: {
+  id?: DirectoryId.DirectoryId;
+  ownerId: UserId;
+}): RootDirectory {
   return {
     id,
     name: `${ownerId}-trash`,
-    parentId: id,
     ownerId: ownerId,
     lastModifiedAt: new Date(),
   };
 }
 
 export function moveToTrash(directory: Directory, trash: Directory) {
-  directory.parentId = trash.id
+  if (isNormalDirectory(directory)) {
+    directory.parentId = trash.id;
+  }
 }
