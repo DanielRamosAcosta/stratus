@@ -1,12 +1,13 @@
+import {Agent, fetch} from 'undici';
+import fs from "fs";
 import * as client from "openid-client";
-import { config } from "../config";
-import { OidcUserInfo } from "../../../users/domain/User";
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+import {OidcUserInfo} from "~/core/users/domain/User";
+import {config} from "../config";
 
 export class OIDCClient {
   private static instance: OIDCClient;
 
-  private config: client.Configuration;
+  private readonly config: client.Configuration;
 
   private constructor(config: client.Configuration) {
     this.config = config;
@@ -14,22 +15,37 @@ export class OIDCClient {
 
   public static async getInstance(): Promise<OIDCClient> {
     if (!OIDCClient.instance) {
+      let customFetch = fetch;
+      if (config.OAUTH_CERTIFICATE_PATH) {
+        const dispatcher = new Agent({
+          connect: {
+            ca: fs.readFileSync(config.OAUTH_CERTIFICATE_PATH)
+          }
+        });
+
+
+        customFetch = (url, options) => {
+          return fetch(url, { ...options, dispatcher });
+        };
+      }
+
       return new OIDCClient(
         await client.discovery(
           new URL(config.OAUTH_ISSUER_URL),
           config.OAUTH_CLIENT_ID,
-          config.OAUTH_CLIENT_SECRET
-        )
+          config.OAUTH_CLIENT_SECRET,
+          undefined,
+        {
+          [client.customFetch]: customFetch as unknown as typeof window.fetch
+        })
       );
     }
     return OIDCClient.instance;
   }
 
   async buildAuthorizationUrl(url: string) {
-    console.log("buildAuthorizationUrl", url, config);
     const origin = new URL(url).origin;
     const codeVerifier: string = client.randomPKCECodeVerifier();
-    // client.tokenIntrospection()
 
     const parameters: Record<string, string> = {
       redirect_uri: new URL("/auth/callback", origin).toString(),
@@ -39,7 +55,6 @@ export class OIDCClient {
       state: client.randomState(),
     };
 
-    console.log("FULL CONFIG 0", JSON.stringify(this.config, null, 2));
     const redirectTo = client.buildAuthorizationUrl(this.config, parameters);
 
     return {
@@ -49,14 +64,7 @@ export class OIDCClient {
   }
 
    async introspectToken(accessToken: string) {
-    const result = await client.tokenIntrospection(this.config, accessToken);
-    console.log("introspection result", JSON.stringify(result, null, 2));
-    return result;
-  }
-
-  public async hasExpired(accessToken: string): Promise<boolean> {
-    const result = await this.introspectToken(accessToken);
-    return result.active === false;
+     return await client.tokenIntrospection(this.config, accessToken);
   }
 
   public async getUserInfo(accessToken: string, sub: string): Promise<OidcUserInfo> {
@@ -68,7 +76,6 @@ export class OIDCClient {
   }
 
   async authorizationCodeGrant(url: string, pkceCodeVerifier: string) {
-    console.log("authorizationCodeGrant", url, pkceCodeVerifier, config);
     const fullUrl = new URL(url);
     fullUrl.searchParams.delete("state");
 

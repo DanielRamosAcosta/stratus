@@ -13,7 +13,7 @@ export const action = asyncFlow(
       withValidFormData(
         z.object({
           name: z.string().min(1),
-          parentId: z.uuid().transform(DirectoryId.cast),
+          parentId: z.string().transform(DirectoryId.cast),
         })
       ),
       async ({ user, data }) => {

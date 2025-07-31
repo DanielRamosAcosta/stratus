@@ -21,6 +21,17 @@ export type OidcUserInfo = {
   picture?: string;
 };
 
+export type SidebarUser = {
+  name: string;
+  email: string;
+  initials: string;
+  avatar?: string;
+}
+
+export function cast(userId: UserId): UserId {
+  return userId;
+}
+
 export function fromOidc(userInfo: OidcUserInfo): User {
   return {
     id: userInfo.sub,
@@ -47,4 +58,13 @@ export function getInitials(user: User): string {
   }
   
   return "??";
+}
+
+export function toSidebarUser(user: User): SidebarUser {
+  return {
+    name: user.name,
+    email: user.email,
+    initials: getInitials(user),
+    avatar: user.picture,
+  };
 }

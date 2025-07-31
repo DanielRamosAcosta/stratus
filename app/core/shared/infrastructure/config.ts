@@ -6,6 +6,7 @@ const ConfigSchema = z.object({
   OAUTH_ISSUER_URL: z.string(),
   OAUTH_CLIENT_ID: z.string(),
   OAUTH_CLIENT_SECRET: z.string(),
+  OAUTH_CERTIFICATE_PATH: z.string().optional(),
   DB_HOSTNAME: z.string(),
   DB_PORT: z.string().default("5432").transform(Number),
   DB_USERNAME: z.string().default("stratus"),

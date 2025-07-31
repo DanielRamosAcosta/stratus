@@ -23,6 +23,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "~/components/ui/sidebar"
+import { SidebarUser } from "../core/users/domain/User"
 
 // This is sample data.
 const data = {
@@ -154,17 +155,17 @@ const data = {
   ],
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ user, rootDirectoryId, trashDirectoryId, ...props }: React.ComponentProps<typeof Sidebar> & { user: SidebarUser, rootDirectoryId: string, trashDirectoryId: string }) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain />
+        <NavMain rootDirectoryId={rootDirectoryId} trashDirectoryId={trashDirectoryId} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

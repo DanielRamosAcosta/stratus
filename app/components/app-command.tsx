@@ -11,6 +11,8 @@ import {
   User,
   Search,
   Folder,
+  BadgeCheck,
+  Shield,
 } from "lucide-react";
 import {
   CommandDialog,
@@ -103,6 +105,13 @@ export function AppCommand() {
       onSelect: () => handleSelect(() => navigate("/dashboard/trash")),
     },
     {
+      id: "account",
+      name: "Account",
+      group: "Settings",
+      icon: <BadgeCheck className="mr-2 h-4 w-4" />,
+      onSelect: () => handleSelect(() => navigate("/dashboard/account")),
+    },
+    {
       id: "settings",
       name: "Settings",
       group: "Settings",
@@ -110,11 +119,11 @@ export function AppCommand() {
       onSelect: () => handleSelect(() => navigate("/dashboard/settings")),
     },
     {
-      id: "account-settings",
-      name: "Account settings",
+      id: "administration",
+      name: "Administration",
       group: "Settings",
-      icon: <User className="mr-2 h-4 w-4" />,
-      onSelect: () => handleSelect(() => navigate("/dashboard/account")),
+      icon: <Shield className="mr-2 h-4 w-4" />,
+      onSelect: () => handleSelect(() => navigate("/dashboard/administration")),
     },
   ];
 

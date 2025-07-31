@@ -2,7 +2,7 @@ import { OidcUserInfo } from "../domain/User";
 import * as User from "../domain/User";
 import * as Directory from "../../directories/domain/Directory";
 import * as DirectoryRepository from "../../directories/infrastructure/DirectoryRepository";
-import * as UserRepository from "../infrastructure/UserRepositoryKysely";
+import * as UserRepository from "../infrastructure/UserRepositoryArangoDB";
 
 export async function saveFromUserInfo({
   userInfo,

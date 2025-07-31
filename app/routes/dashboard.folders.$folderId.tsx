@@ -1,9 +1,10 @@
-import type { MetaFunction, LoaderFunctionArgs } from "@remix-run/node";
+import type { MetaFunction } from "@remix-run/node";
 import { data, redirect } from "@remix-run/node";
 import { useLoaderData, useNavigate } from "@remix-run/react";
 import { z } from "zod";
 import { Folder, File, Link, Upload, Grid3X3, List } from "lucide-react";
 import { Button } from "~/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -20,7 +21,6 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { sessionStorage } from "~/services/auth.server";
 
 import { moveToTrash } from "../core/directories/application/MoveToTrash";
 import * as EntryId from "../core/shared/domain/EntryId";
@@ -28,10 +28,15 @@ import { BtnCreateNewFolder } from "../components/btn-create-new-folder";
 import { RowEntryActions } from "../components/row-entry-actions";
 import { asyncFlow } from "../utils/asyncFlow";
 import { MimeIcon } from "../components/mime-icon";
-import { findDirectoryContents, getDirectoryPath } from "../core/shared/infrastructure/db/DirectoryRepository";
 import { withProtection } from "../core/shared/infrastructure/middlewares/withProtection";
 import { withMultiplexer } from "../core/shared/infrastructure/middlewares/withMultiplexer";
 import { withValidFormData } from "../core/shared/infrastructure/middlewares/withValidFormData";
+import { listEntriesOf } from "../core/entries/infrastructure/EntryRepository";
+import * as DirectoryId from "../core/directories/domain/DirectoryId";
+import {
+  ListEntry,
+} from "../core/entries/domain/ListEntry";
+import { withValidParams } from "../core/shared/infrastructure/middlewares/withValidParams";
 
 export const meta: MetaFunction = () => {
   return [
@@ -46,7 +51,7 @@ export const action = asyncFlow(
     DELETE: asyncFlow(
       withValidFormData(
         z.object({
-          entryId: z.uuid().transform(EntryId.cast),
+          entryId: z.string().transform(EntryId.cast),
         })
       ),
       async ({ user, data }) => {
@@ -56,48 +61,9 @@ export const action = asyncFlow(
   })
 );
 
-type EntryDirectory = {
-  type: "directory";
-  id: string;
-  name: string;
-  ownerId: string;
-  lastModified: Date;
-};
-
-type EntryFile = {
-  type: "file";
-  id: string;
-  size: number;
-  mimeType: string;
-  name: string;
-  ownerId: string;
-  lastModified: Date;
-};
-
-type EntrySymlink = {
-  type: "symlink";
-  id: string;
-  name: string;
-};
-
-type Entry = EntryDirectory | EntryFile | EntrySymlink;
-
-type PathSegment = {
-  id: string;
-  name: string;
-};
-
-type LoaderData = {
-  folderId: string;
-  path: PathSegment[];
-  entries: (EntryDirectory | EntryFile | EntrySymlink)[];
-};
-
 export default function FolderView() {
-  const loaderData = useLoaderData<LoaderData>();
+  const loaderData = useLoaderData<typeof loader>();
   const navigate = useNavigate();
-
-  // Sort entries
   const sortedEntries = loaderData.entries;
 
   function formatBytes(bytes: number) {
@@ -129,7 +95,12 @@ export default function FolderView() {
         return <Folder className="h-4 w-4 text-blue-600 dark:text-blue-400" />;
       case "file":
         console.log(entry.mimeType, "File MIME type");
-        return <MimeIcon mimeType={entry.mimeType} className="h-4 w-4 text-muted-foreground" />;
+        return (
+          <MimeIcon
+            mimeType={entry.mimeType}
+            className="h-4 w-4 text-muted-foreground"
+          />
+        );
       case "symlink":
         return (
           <Link className="h-4 w-4 text-purple-600 dark:text-purple-400" />
@@ -139,10 +110,7 @@ export default function FolderView() {
     }
   };
 
-
-  const handleEntryDoubleClick = (
-    entry: EntryDirectory | EntryFile | EntrySymlink
-  ) => {
+  const handleEntryDoubleClick = (entry: ListEntry) => {
     // Double click navigates
     if (entry.type === "directory") {
       navigate(`/dashboard/folders/${entry.id}`);
@@ -157,11 +125,6 @@ export default function FolderView() {
         <div className="flex items-center">
           <Breadcrumb>
             <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/dashboard/folders/343cbdbd-2160-4e50-8e05-5ea20dfe0e24">
-                  My Drive
-                </BreadcrumbLink>
-              </BreadcrumbItem>
               {loaderData.path.map((segment, index) => {
                 const pathToSegment = loaderData.path.slice(0, index + 1);
                 const href = `/dashboard/folders/${
@@ -169,7 +132,9 @@ export default function FolderView() {
                 }`;
 
                 return [
-                  <BreadcrumbSeparator key={`sep-${segment.id}`} />,
+                  index > 0 && (
+                    <BreadcrumbSeparator key={`sep-${segment.id}`} />
+                  ),
                   <BreadcrumbItem key={`item-${segment.id}`}>
                     {index === loaderData.path.length - 1 ? (
                       <BreadcrumbPage>{segment.name}</BreadcrumbPage>
@@ -235,7 +200,19 @@ export default function FolderView() {
                   </div>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
-                  {"ownerId" in entry ? entry.ownerId : "—"}
+                  {"owner" in entry ? (
+                    <div className="flex items-center space-x-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={entry.owner?.picture} />
+                        <AvatarFallback>
+                          {entry.owner.name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span>{entry.owner.name}</span>
+                    </div>
+                  ) : (
+                    "—"
+                  )}
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {"lastModified" in entry && entry.lastModified
@@ -280,45 +257,24 @@ export default function FolderView() {
   );
 }
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
-  let session = await sessionStorage.getSession(request.headers.get("cookie"));
-  let accessToken = session.get("access_token");
-  if (!accessToken) throw redirect("/login");
-
-  const { directories, files } = await findDirectoryContents(
-    params.folderId || "root"
-  );
-  const path = await getDirectoryPath(params.folderId || "root");
-
-  const directoriesEntries = directories.map(
-    (dir): EntryDirectory => ({
-      type: "directory",
-      id: dir.id,
-      name: dir.name,
-      ownerId: "dani",
-      lastModified: dir.last_modified_at,
+export const loader = asyncFlow(
+  withProtection,
+  withValidParams(
+    z.object({
+      folderId: z.string().transform(DirectoryId.cast),
     })
-  );
+  ),
+  async ({ user, params }) => {
+    const { path, entries, owner } = await listEntriesOf(params.folderId);
 
-  console.log("files", files)
+    if (owner.id !== user.sub) {
+      throw redirect(`/error/not-owner`);
+    }
 
-  const fileEntries = files.map(
-    (file): EntryFile => ({
-      type: "file",
-      id: file.id,
-      name: file.name,
-      ownerId: "dani",
-      lastModified: file.last_modified_at,
-      size: file.size,
-      mimeType: file.mime_type,
-    })
-  );
-
-  const entries: Entry[] = [...directoriesEntries, ...fileEntries];
-
-  return data<LoaderData>({
-    folderId: params.folderId || "root",
-    path,
-    entries: entries,
-  });
-}
+    return data({
+      folderId: DirectoryId.cast(params.folderId),
+      path,
+      entries,
+    });
+  }
+);

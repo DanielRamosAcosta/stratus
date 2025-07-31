@@ -1,8 +1,7 @@
 import { DirectoryId, randomDirectoryId } from "../domain/DirectoryId";
-
 import { UserId } from "../../users/domain/User";
-import { findDirectoryById, createDirectoryDb } from "../../shared/infrastructure/db/DirectoryRepository";
-import { NewDirectory } from "../../shared/infrastructure/db/types";
+import { db } from "../../shared/infrastructure/db/db";
+import { aql } from "arangojs";
 
 export const createDirectory = async ({
   id = randomDirectoryId(),
@@ -15,19 +14,20 @@ export const createDirectory = async ({
   parentId: DirectoryId;
   triggeredBy: UserId;
 }): Promise<void> => {
-  const parent = await findDirectoryById(parentId);
-
-  if (!parent) {
-    throw new Error(`Parent directory with ID ${parentId} not found`);
+  const otherDirectory = {
+    id: id,
+    name,
+    lastModifiedAt: new Date(),
   }
 
-  const newDirectory: NewDirectory = {
-    id,
-    name,
-    owner_id: parent.owner_id, // Assuming the owner is the same as the parent
-    parent_id: parentId,
-    last_modified_at: new Date(),
-  };
+  console.log("A punto de guardar el directorio:", otherDirectory);
 
-  await createDirectoryDb(newDirectory);
+  await db.query(aql`
+    INSERT {
+      _key: ${otherDirectory.id},
+      name: ${otherDirectory.name},
+      lastModifiedAt: ${otherDirectory.lastModifiedAt}
+    } INTO directories
+    INSERT {_from: CONCAT("directories/", ${parentId}), _to: CONCAT("directories/", ${id}), _key: ${crypto.randomUUID()}} INTO structure
+  `);
 };

@@ -28,17 +28,15 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "~/components/ui/sidebar";
+import { SidebarUser } from "../core/users/domain/User";
 
 export function NavUser({
   user,
 }: {
-  user: {
-    name: string;
-    email: string;
-    avatar: string;
-  };
+  user: SidebarUser;
 }) {
   const { isMobile } = useSidebar();
+  console.log("NavUser", user);
 
   return (
     <SidebarMenu>
@@ -51,7 +49,7 @@ export function NavUser({
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">DR</AvatarFallback>
+                <AvatarFallback className="rounded-lg">{user.initials}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
