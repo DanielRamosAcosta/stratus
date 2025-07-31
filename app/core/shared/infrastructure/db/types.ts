@@ -58,6 +58,9 @@ export type EntryView = {
   parent_id: string;
   type: "directory" | "file"
   mime_type?: string
+  owner_id: string;
+  owner_name: string;
+  owner_picture?: string;
 }
 
 export interface Database {

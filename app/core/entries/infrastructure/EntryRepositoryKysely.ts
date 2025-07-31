@@ -6,6 +6,7 @@ import * as FileId from "../../files/domain/FileId";
 import {ListEntry, ListEntryDirectory, ListEntryFile, ListEntryResponse} from "~/core/entries/domain/ListEntry";
 import {db} from "~/core/shared/infrastructure/db/database";
 import {EntryView} from "~/core/shared/infrastructure/db/types";
+import { mapEach } from "../../../utils/mapEach";
 
 function searchEntryToDomain(entry: EntryView): QuickSearchEntry {
   if (entry.type === "directory") {
@@ -35,17 +36,13 @@ function searchEntryToDomain(entry: EntryView): QuickSearchEntry {
 
 }
 
-
 export async function quickSearch(query: string): Promise<QuickSearchEntry[]> {
-  const entries = await db.selectFrom("entries")
-  .selectAll()
-  .where("name", "like", `%${query}%`)
-  .whereRef("entries.id", "!=", "entries.parent_id")
-  .execute()
-
-  const mappedEntries = entries.map(searchEntryToDomain);
-  return mappedEntries
-
+  return await db.selectFrom("entries")
+    .selectAll()
+    .where("name", "like", `%${query}%`)
+    .whereRef("entries.id", "!=", "entries.parent_id")
+    .execute()
+    .then(mapEach(searchEntryToDomain));
 }
 
 function listEntryToDomain(entry: EntryView): ListEntry {
@@ -55,9 +52,9 @@ function listEntryToDomain(entry: EntryView): ListEntry {
       type: "directory",
       name: entry.name,
       owner: {
-        id: UserId.cast("3ea98ed6-4a6e-4db6-9e26-f9d684265c6d"),
-        name: "Daniel Ramos",
-        picture: "https://2.gravatar.com/avatar/bd9cf3cfa5c4875128bdd435d7f304403c6c883442670a1cd201abf85d3858d1?size=512&d=initials"
+        id: UserId.cast(entry.owner_id),
+        name: entry.owner_name,
+        picture: entry.owner_picture
       },
       lastModified: new Date()
     }
@@ -73,9 +70,9 @@ function listEntryToDomain(entry: EntryView): ListEntry {
       size: 0,
       mimeType: entry.mime_type as string,
       owner: {
-        id: UserId.cast("CiQ5OGIwODBiNS0yNGU0LTRiMGYtOTc5Yy00M2E5YzQyZTNjMTcSBWxvY2Fs"),
-        name: "Daniel Ramos",
-        picture: "https://2.gravatar.com/avatar/bd9cf3cfa5c4875128bdd435d7f304403c6c883442670a1cd201abf85d3858d1?size=512&d=initials"
+        id: UserId.cast(entry.owner_id),
+        name: entry.owner_name,
+        picture: entry.owner_picture
       },
       lastModified: new Date()
     }
@@ -87,36 +84,39 @@ function listEntryToDomain(entry: EntryView): ListEntry {
 }
 
 export async function listEntriesOf(directoryId: DirectoryId.DirectoryId): Promise<ListEntryResponse> {
-  const entries = await db.selectFrom("entries")
+  const entriesPromise = db.selectFrom("entries")
     .selectAll()
     .where("parent_id", "=", directoryId)
     .whereRef("entries.id", "!=", "entries.parent_id")
     .execute()
+    .then(mapEach(listEntryToDomain));
 
-  const {rows} = await sql`
+  const pathPromise = sql<{id: string, name: string, owner_id: string}>`
     WITH RECURSIVE breadcrumb AS (
-      SELECT id, name, parent_id, 1 AS depth
+      SELECT id, name, parent_id, owner_id, 1 AS depth
       FROM directories
       WHERE id = ${directoryId}
 
       UNION ALL
 
-      SELECT d.id, d.name, d.parent_id, b.depth + 1
+      SELECT d.id, d.name, d.parent_id, d.owner_id, b.depth + 1
       FROM directories d INNER JOIN breadcrumb b ON d.id = b.parent_id
     )
-    SELECT id, name
+    SELECT id, name, owner_id
     FROM breadcrumb
     ORDER BY depth DESC;
-  `.execute(db);
+  `.execute(db).then(result => result.rows);
 
-  console.log("super query, ", rows)
+  const [entries, path] = await Promise.all([
+    entriesPromise,
+    pathPromise
+  ])
 
-  const mappedEntries = entries.map(listEntryToDomain);
   return {
-    path: rows,
-    entries: mappedEntries,
+    path,
+    entries,
     owner: {
-      id: UserId.cast("CiQ5OGIwODBiNS0yNGU0LTRiMGYtOTc5Yy00M2E5YzQyZTNjMTcSBWxvY2Fs")
+      id: UserId.cast(path[0].owner_id)
     }
   }
 }
