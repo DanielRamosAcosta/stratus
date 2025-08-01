@@ -49,17 +49,15 @@ export type Rescan =
 export function launch({
   id = crypto.randomUUID(),
   ownerId,
-  totalFiles,
 }: {
   id?: string;
   ownerId: string;
-  totalFiles: number;
 }): RescanStatusRunning {
   return {
     id,
     ownerId,
     type: "running",
-    totalFiles,
+    totalFiles: 0,
     processedFiles: 0,
     startedAt: new Date(),
   };

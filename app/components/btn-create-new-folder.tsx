@@ -6,17 +6,15 @@ import {
   DialogContent,
   DialogTitle,
   DialogDescription,
-  DialogOverlay,
 } from "~/components/ui/dialog";
-import { FolderPlus, ChevronUp, Command, RefreshCw } from "lucide-react";
+import { FolderPlus, RefreshCw } from "lucide-react";
 import { Button } from "./ui/button";
-import { DialogHeader, DialogFooter, DialogPortal } from "./ui/dialog";
+import { DialogHeader, DialogFooter } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { PlatformShortcut, useShortcut } from "../providers/ShortcutProvider";
 import { useEffect, useState } from "react";
-import { platform } from "os";
 import { Shortcut } from "./shortcut";
-import { Form, useFetcher, useNavigation } from "@remix-run/react";
+import { useFetcher } from "@remix-run/react";
 import { action } from "../routes/dashboard.folders";
 
 type CreateNewFolderProps = {
@@ -78,11 +76,11 @@ export function BtnCreateNewFolder({
                 autoFocus
               />
               <Input
-                id="folderDescription"
+                id="parentId"
                 aria-hidden="true"
                 type="hidden"
                 name="parentId"
-                placeholder="Folder description"
+                placeholder="Parent ID"
                 className="col-span-4"
                 defaultValue={parentId}
               />
