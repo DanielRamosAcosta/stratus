@@ -65,35 +65,19 @@ export default function AdministrationPage() {
               </p>
             </div>
 
-            {isRunning(rescan) &&
-              (() => {
-                const progress = Math.round(
-                  (rescan.processedFiles * 100) / rescan.totalFiles
-                );
-
-                return (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="flex items-center gap-2">
-                        <Database className="h-4 w-4" />
-                        Scanning...
-                      </span>
-                      <span className="text-muted-foreground">
-                        {rescan.processedFiles} / {rescan.totalFiles}
-                      </span>
-                    </div>
-                    <div className="w-full bg-secondary rounded-full h-2">
-                      <div
-                        className="bg-primary h-2 rounded-full transition-all duration-300 ease-out"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {Math.floor(progress)}% complete
-                    </div>
-                  </div>
-                );
-              })()}
+            {isRunning(rescan) && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    <Database className="h-4 w-4" />
+                    Scanning...
+                  </span>
+                  <span className="text-muted-foreground">
+                    {rescan.importedDirectories} dirs, {rescan.importedFiles} files
+                  </span>
+                </div>
+              </div>
+            )}
 
             {isError(rescan) && (
               <div className="rounded-md bg-red-50 dark:bg-red-950 p-3 border border-red-200 dark:border-red-800">
@@ -125,18 +109,18 @@ export default function AdministrationPage() {
                     <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <span className="text-green-700 dark:text-green-300 font-medium">
-                          Files Processed:
+                          Directories Imported:
                         </span>
                         <span className="ml-2 text-green-600 dark:text-green-400">
-                          {rescan.processedFiles}
+                          {rescan.importedDirectories}
                         </span>
                       </div>
                       <div>
                         <span className="text-green-700 dark:text-green-300 font-medium">
-                          Total Files:
+                          Files Imported:
                         </span>
                         <span className="ml-2 text-green-600 dark:text-green-400">
-                          {rescan.totalFiles}
+                          {rescan.importedFiles}
                         </span>
                       </div>
                       <div>

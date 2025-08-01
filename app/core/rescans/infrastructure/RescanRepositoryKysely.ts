@@ -15,15 +15,15 @@ export async function save(rescan: Rescan) {
       .values({
         id: rescan.id,
         owner_id: rescan.ownerId,
-        total_files: rescan.totalFiles,
-        processed_files: rescan.processedFiles,
+        imported_directories: rescan.importedDirectories,
+        imported_files: rescan.importedFiles,
         started_at: rescan.startedAt,
       })
       .onConflict((oc) => oc
         .column("id")
         .doUpdateSet({
-          total_files: rescan.totalFiles,
-          processed_files: rescan.processedFiles,
+          imported_directories: rescan.importedDirectories,
+          imported_files: rescan.importedFiles,
         })
       )
       .execute();
@@ -33,16 +33,16 @@ export async function save(rescan: Rescan) {
       .values({
         id: rescan.id,
         owner_id: rescan.ownerId,
-        total_files: rescan.totalFiles,
-        processed_files: rescan.processedFiles,
+        imported_directories: rescan.importedDirectories,
+        imported_files: rescan.importedFiles,
         started_at: rescan.startedAt,
         finished_at: rescan.finishedAt,
       })
       .onConflict((oc) => oc
         .column("id")
         .doUpdateSet({
-          total_files: rescan.totalFiles,
-          processed_files: rescan.processedFiles,
+          imported_directories: rescan.importedDirectories,
+          imported_files: rescan.importedFiles,
           finished_at: rescan.finishedAt,
         })
       )
@@ -60,6 +60,8 @@ export async function save(rescan: Rescan) {
       .values({
         id: rescan.id,
         owner_id: rescan.ownerId,
+        imported_directories: rescan.importedDirectories,
+        imported_files: rescan.importedFiles,
         started_at: rescan.startedAt,
         finished_at: rescan.finishedAt,
         message: rescan.message,
@@ -67,6 +69,8 @@ export async function save(rescan: Rescan) {
       .onConflict((oc) => oc
         .column("id")
         .doUpdateSet({
+          imported_directories: rescan.importedDirectories,
+          imported_files: rescan.importedFiles,
           finished_at: rescan.finishedAt,
           message: rescan.message,
         })
@@ -112,8 +116,8 @@ export async function findLatestRescan(ownerId: string): Promise<Rescan> {
       id: runningRescan.id,
       ownerId: runningRescan.owner_id,
       type: "running",
-      totalFiles: runningRescan.total_files,
-      processedFiles: runningRescan.processed_files,
+      importedDirectories: runningRescan.imported_directories,
+      importedFiles: runningRescan.imported_files,
       startedAt: runningRescan.started_at,
     };
   }
@@ -125,8 +129,8 @@ export async function findLatestRescan(ownerId: string): Promise<Rescan> {
           id: completedRescan.id,
           ownerId: completedRescan.owner_id,
           type: "completed" as const,
-          totalFiles: completedRescan.total_files,
-          processedFiles: completedRescan.processed_files,
+          importedDirectories: completedRescan.imported_directories,
+          importedFiles: completedRescan.imported_files,
           startedAt: completedRescan.started_at,
           finishedAt: completedRescan.finished_at,
         }
@@ -136,6 +140,8 @@ export async function findLatestRescan(ownerId: string): Promise<Rescan> {
           id: errorRescan.id,
           ownerId: errorRescan.owner_id,
           type: "error" as const,
+          importedDirectories: errorRescan.imported_directories,
+          importedFiles: errorRescan.imported_files,
           startedAt: errorRescan.started_at,
           finishedAt: errorRescan.finished_at,
           message: errorRescan.message,
@@ -155,13 +161,17 @@ export async function findLatestRescan(ownerId: string): Promise<Rescan> {
   );
 }
 
-export async function updateRescanProcessedFiles(
+export async function updateRescanImportedCounts(
   id: string,
-  processedFiles: number
+  importedDirectories: number,
+  importedFiles: number
 ) {
   return await db
     .updateTable("rescans_running")
-    .set({ processed_files: processedFiles })
+    .set({ 
+      imported_directories: importedDirectories,
+      imported_files: importedFiles
+    })
     .where("id", "=", id)
     .execute();
 }

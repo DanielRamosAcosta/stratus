@@ -46,7 +46,12 @@ export const doRescan = async ({
 
   Promise.resolve()
     .then(async () => {
-      await setTimeout(100);
+      for(let i = 0; i < 200; i++) {
+        await setTimeout(100);
+        rescan.importedDirectories += directories.length;
+        rescan.importedFiles += files.length;
+        await save(rescan);
+      }
     })
     .then(() => {
       return save(Rescan.complete(rescan));

@@ -4,8 +4,8 @@ export type RescanStatusRunning = {
   id: string;
   ownerId: string;
   type: "running";
-  totalFiles: number;
-  processedFiles: number;
+  importedDirectories: number;
+  importedFiles: number;
   startedAt: Date;
 };
 
@@ -17,8 +17,8 @@ export type RescanStatusCompleted = {
   id: string;
   ownerId: string;
   type: "completed";
-  totalFiles: number;
-  processedFiles: number;
+  importedDirectories: number;
+  importedFiles: number;
   startedAt: Date;
   finishedAt: Date;
 };
@@ -32,6 +32,8 @@ export type RescanStatusError = {
   ownerId: string;
   type: "error";
   message: string;
+  importedDirectories: number;
+  importedFiles: number;
   startedAt: Date;
   finishedAt: Date;
 };
@@ -57,8 +59,8 @@ export function launch({
     id,
     ownerId,
     type: "running",
-    totalFiles: 0,
-    processedFiles: 0,
+    importedDirectories: 0,
+    importedFiles: 0,
     startedAt: new Date(),
   };
 }

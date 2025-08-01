@@ -43,8 +43,8 @@ CREATE TABLE entries (
 CREATE TABLE rescans_running (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     owner_id VARCHAR(255) NOT NULL,
-    total_files INTEGER NOT NULL DEFAULT 0,
-    processed_files INTEGER NOT NULL DEFAULT 0,
+    imported_directories INTEGER NOT NULL DEFAULT 0,
+    imported_files INTEGER NOT NULL DEFAULT 0,
     started_at TIMESTAMP NOT NULL DEFAULT NOW(),
 
     FOREIGN KEY (owner_id) REFERENCES users(id)
@@ -55,8 +55,8 @@ CREATE TABLE rescans_completed (
     owner_id VARCHAR(255) NOT NULL,
     started_at TIMESTAMP NOT NULL DEFAULT NOW(),
     finished_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    total_files INTEGER NOT NULL DEFAULT 0,
-    processed_files INTEGER NOT NULL DEFAULT 0,
+    imported_directories INTEGER NOT NULL DEFAULT 0,
+    imported_files INTEGER NOT NULL DEFAULT 0,
 
     FOREIGN KEY (owner_id) REFERENCES users(id)
 );

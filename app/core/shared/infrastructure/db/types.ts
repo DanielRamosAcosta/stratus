@@ -30,16 +30,16 @@ export type FileUpdate = Updateable<FileTable>;
 export type RescanRunningTable = {
   id: string;
   owner_id: string;
-  total_files: number;
-  processed_files: number;
+  imported_directories: number;
+  imported_files: number;
   started_at: Date;
 };
 
 export type RescanCompletedTable = {
   id: string;
   owner_id: string;
-  total_files: number;
-  processed_files: number;
+  imported_directories: number;
+  imported_files: number;
   started_at: Date;
   finished_at: Date;
 };
@@ -48,6 +48,8 @@ export type RescanErrorTable = {
   id: string;
   owner_id: string;
   message: string;
+  imported_directories: number;
+  imported_files: number;
   started_at: Date;
   finished_at: Date;
 };
