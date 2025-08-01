@@ -5,6 +5,7 @@ import { save } from "../infrastructure/RescanRepositoryKysely";
 import { UserId } from "~/core/users/domain/UserId";
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { isPresent } from "../../../utils/isPresent";
+import { config } from "../../shared/infrastructure/config";
 
 const client = new S3Client({
   region: "us-east-1", // Cambia esto según tu región
@@ -23,10 +24,17 @@ export const doRescan = async ({
   id?: RescanId;
   triggeredBy: UserId;
 }): Promise<void> => {
-  const bucketName = "dani";
+
+  const bucketConfig = config.S3_BUCKETS.find(bucketConfig => bucketConfig.userId === triggeredBy);
+
+  console.log(config.S3_BUCKETS, bucketConfig)
+
+  if (!bucketConfig) {
+    throw new Error(`No S3 bucket config found for user ${triggeredBy}`);
+  }
 
   const command = new ListObjectsV2Command({
-    Bucket: bucketName,
+    Bucket: bucketConfig.bucketName,
     Prefix: "",
     Delimiter: "/",
   });

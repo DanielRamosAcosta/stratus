@@ -12,6 +12,25 @@ const ConfigSchema = z.object({
   DB_USERNAME: z.string().default("stratus"),
   DB_PASSWORD: z.string(),
   DB_DATABASE_NAME: z.string().default("stratus"),
+  S3_BUCKETS: z
+    .string()
+    .refine((value) => {
+      try {
+        JSON.parse(value);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    })
+    .transform((value) => JSON.parse(value))
+    .pipe(
+      z.array(
+        z.object({
+          userId: z.string(),
+          bucketName: z.string(),
+        })
+      )
+    ),
 });
 
 export const config = ConfigSchema.parse(process.env);
