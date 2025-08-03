@@ -11,3 +11,4 @@ node_modules
 
 docker/minio/.minio.sys/
 .idea
+docker
