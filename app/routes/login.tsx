@@ -1,11 +1,11 @@
 import {redirect} from "react-router";
 import {ActionFunctionArgs, data, LoaderFunctionArgs} from "@remix-run/node";
-import {sessionStorage} from "~/services/auth.server";
 import {Button} from "~/components/ui/button";
 import {Card, CardContent, CardHeader, CardTitle} from "~/components/ui/card";
 import {config} from "~/core/shared/infrastructure/config";
 import {Form, useLoaderData} from "@remix-run/react";
 import {OIDCClient} from "~/core/shared/infrastructure/auth/OIDCClient";
+import {sessionStorage} from "~/core/shared/infrastructure/auth/SessionStorage";
 
 
 export default function Component() {

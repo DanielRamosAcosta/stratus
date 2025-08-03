@@ -1,7 +1,7 @@
 import { redirect } from "@remix-run/node";
 import { OIDCClient } from "../auth/OIDCClient";
 import { IntrospectionResponse } from "openid-client";
-import {sessionStorage} from "~/services/auth.server";
+import { sessionStorage } from "../auth/SessionStorage";
 
 export type WithIntrospection<T> = T & { introspection: IntrospectionResponse };
 

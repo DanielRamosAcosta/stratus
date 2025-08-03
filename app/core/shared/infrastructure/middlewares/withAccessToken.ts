@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, LoaderFunctionArgs, redirect } from "@remix-run/node";
-import { sessionStorage } from "~/services/auth.server";
+import { sessionStorage } from "../auth/SessionStorage";
 
 export type WithAccessToken<T> = T & { accessToken: string };
 

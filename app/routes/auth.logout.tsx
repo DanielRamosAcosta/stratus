@@ -1,6 +1,5 @@
 import { LoaderFunctionArgs, ActionFunctionArgs, redirect } from "@remix-run/node";
-import { sessionStorage } from "~/services/auth.server";
-
+import { sessionStorage } from "~/core/shared/infrastructure/auth/SessionStorage";
 
 export async function action({ request }: ActionFunctionArgs) {
   const session = await sessionStorage.getSession(request.headers.get("cookie"));

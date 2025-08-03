@@ -1,7 +1,7 @@
 import {LoaderFunctionArgs, redirect} from "@remix-run/node";
-import {sessionStorage} from "~/services/auth.server";
 import {saveFromUserInfo} from "~/core/users/application/SaveFromUserInfo";
 import {OIDCClient} from "~/core/shared/infrastructure/auth/OIDCClient";
+import {sessionStorage} from "~/core/shared/infrastructure/auth/SessionStorage";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const oidc = await OIDCClient.getInstance();
