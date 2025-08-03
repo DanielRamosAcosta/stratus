@@ -1,11 +1,11 @@
-import {DirectoryId, randomDirectoryId} from "../domain/DirectoryId";
+import {DirectoryId, random} from "../domain/DirectoryId";
 import * as Directory from "../domain/Directory";
 import {UserId} from "~/core/users/domain/UserId";
 import {directoryRepository} from "~/core/directories/infrastructure";
 
 export const createInitialDirectories = async ({
-  rootId = randomDirectoryId(),
-  trashId = randomDirectoryId(),
+  rootId = random(),
+  trashId = random(),
   triggeredBy
 }: {
   rootId?: DirectoryId;

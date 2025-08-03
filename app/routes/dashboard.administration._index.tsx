@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { RefreshCw, Database, HardDrive } from "lucide-react";
-import { isCompleted, isError, isRunning } from "../core/rescans/domain/rescan";
+import { isCompleted, isError, isRunning } from "../core/rescans/domain/Rescan";
 import { findLatestRescan } from "../core/rescans/infrastructure/RescanRepositoryKysely";
 
 export default function AdministrationPage() {

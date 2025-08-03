@@ -2,7 +2,7 @@ import { Identifier } from "../../shared/domain/Identifier";
 
 export type FileId = Identifier<"FileId", string>;
 
-export function randomFileId(): FileId {
+export function random(): FileId {
   return crypto.randomUUID() as FileId;
 }
 

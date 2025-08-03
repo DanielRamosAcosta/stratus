@@ -74,3 +74,11 @@ export async function findBy(directoryId: DirectoryId.DirectoryId): Promise<Dire
   if (!value) return undefined;
   return toDomain(value);
 }
+
+export async function deleteAll(userId: UserId.UserId): Promise<void> {
+  console.log("Deleting all directories for user:", userId);
+  await db
+    .deleteFrom("directories")
+    .where("owner_id", "=", userId)
+    .execute();
+}

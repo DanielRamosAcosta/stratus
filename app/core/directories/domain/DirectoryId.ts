@@ -2,7 +2,7 @@ import type { Identifier } from "../../shared/domain/Identifier";
 
 export type DirectoryId = Identifier<"DirectoryId", string>;
 
-export function randomDirectoryId(): DirectoryId {
+export function random(): DirectoryId {
   return crypto.randomUUID() as DirectoryId;
 }
 

@@ -7,4 +7,5 @@ export interface DirectoryRepository {
   getRootOf(userId: UserId): Promise<Directory | undefined>;
   getTrashOf(userId: UserId): Promise<Directory | undefined>;
   save(directory: Directory): Promise<void>
+  deleteAll(userId: UserId): Promise<void>;
 }

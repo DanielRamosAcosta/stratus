@@ -1,4 +1,5 @@
 import { DirectoryId } from "../../directories/domain/DirectoryId";
+import { UserId } from "../../users/domain/UserId";
 import { FileId } from "./FileId";
 
 export type File = {
@@ -7,6 +8,7 @@ export type File = {
   mimeType: string;
   name: string;
   lastModified: Date;
+  ownerId: UserId;
   parentId: DirectoryId
 };
 

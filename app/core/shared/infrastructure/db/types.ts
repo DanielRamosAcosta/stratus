@@ -59,6 +59,7 @@ export type EntryView = {
   name: string;
   parent_id: string;
   type: "directory" | "file"
+  size?: number
   mime_type?: string
   owner_id: string;
   owner_name: string;

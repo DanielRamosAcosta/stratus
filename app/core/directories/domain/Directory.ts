@@ -47,7 +47,7 @@ export function create({
 }
 
 export function createRoot({
-  id = DirectoryId.randomDirectoryId(),
+  id = DirectoryId.random(),
   ownerId,
 }: {
   id?: DirectoryId.DirectoryId;
@@ -62,7 +62,7 @@ export function createRoot({
 }
 
 export function createTrash({
-  id = DirectoryId.randomDirectoryId(),
+  id = DirectoryId.random(),
   ownerId,
 }: {
   id?: DirectoryId.DirectoryId;

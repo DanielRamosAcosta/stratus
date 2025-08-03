@@ -52,6 +52,8 @@ export const loader = asyncFlow(
         throw redirect(`/error/not-owner`);
       }
 
+      console.log("loaded entries:", entries);
+
       return data({
         folderId: DirectoryId.cast(params.folderId),
         path,
@@ -102,7 +104,6 @@ export default function FolderView() {
       case "directory":
         return <Folder className="h-4 w-4 text-blue-600 dark:text-blue-400" />;
       case "file":
-        console.log(entry.mimeType, "File MIME type");
         return (
           <MimeIcon
             mimeType={entry.mimeType}

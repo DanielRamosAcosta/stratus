@@ -5,12 +5,12 @@ import {
   Rescan,
   RescanStatusCompleted,
   RescanStatusError,
-} from "../domain/rescan";
+} from "../domain/Rescan";
 import { db } from "../../shared/infrastructure/db/database";
 
-export async function save(rescan: Rescan) {
+export async function save(rescan: Rescan): Promise<void> {
   if (isRunning(rescan)) {
-    return await db
+    await db
       .insertInto("rescans_running")
       .values({
         id: rescan.id,
@@ -27,6 +27,8 @@ export async function save(rescan: Rescan) {
         })
       )
       .execute();
+
+    return;
   } else if (isCompleted(rescan)) {
     await db
       .insertInto("rescans_completed")
@@ -86,7 +88,7 @@ export async function save(rescan: Rescan) {
     return;
   }
 
-  throw new Error("Invalid rescan state", rescan);
+  throw new Error("Invalid rescan state" + rescan);
 }
 
 export async function findLatestRescan(ownerId: string): Promise<Rescan> {

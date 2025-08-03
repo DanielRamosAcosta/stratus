@@ -1,70 +1,87 @@
 import { setTimeout } from "node:timers/promises";
-import * as Rescan from "../domain/rescan";
+import * as Rescan from "../domain/Rescan";
 import { RescanId } from "../domain/RescanId";
-import { save } from "../infrastructure/RescanRepositoryKysely";
-import { UserId } from "~/core/users/domain/UserId";
-import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
-import { isPresent } from "../../../utils/isPresent";
-import { config } from "../../shared/infrastructure/config";
-
-const client = new S3Client({
-  region: "us-east-1", // Cambia esto según tu región
-  endpoint: "http://localhost:9000", // tu endpoint MinIO
-  credentials: {
-    accessKeyId: "minioadmin", // tu access key
-    secretAccessKey: "minioadmin", // tu secret key
-  },
-  forcePathStyle: true, // IMPORTANTE para MinIO
-});
+import * as UserId from "~/core/users/domain/UserId";
+import { File } from "../../files/domain/File";
+import * as FileId from "../../files/domain/FileId";
+import * as DirectoryId from "../../directories/domain/DirectoryId";
+import * as Directory from "../../directories/domain/Directory";
+import { fileRepository } from "../../files/infrastructure";
+import { directoryRepository } from "../../directories/infrastructure";
+import { rescanRepository } from "../infrastructure";
+import { objectProvider } from "../../objects/infrastructure";
+import * as ObjectEntry from "../../objects/domain/ObjectEntry";
+import * as ObjectDirectory from "../../objects/domain/ObjectDirectory";
+import * as ObjectFile from "../../objects/domain/ObjectFile";
 
 export const doRescan = async ({
   id = crypto.randomUUID() as RescanId,
   triggeredBy,
 }: {
   id?: RescanId;
-  triggeredBy: UserId;
+  triggeredBy: UserId.UserId;
 }): Promise<void> => {
+  const rescan = Rescan.launch({ id, ownerId: triggeredBy });
+  await rescanRepository.save(rescan);
 
-  const bucketConfig = config.S3_BUCKETS.find(bucketConfig => bucketConfig.userId === triggeredBy);
+  try {
+    await fileRepository.deleteAll(triggeredBy);
+    await directoryRepository.deleteAll(triggeredBy);
 
-  console.log(config.S3_BUCKETS, bucketConfig)
+    const root = Directory.createRoot({ ownerId: triggeredBy });
+    const trash = Directory.createTrash({ ownerId: triggeredBy });
 
-  if (!bucketConfig) {
-    throw new Error(`No S3 bucket config found for user ${triggeredBy}`);
+    await directoryRepository.save(root);
+    await directoryRepository.save(trash);
+
+    const data = await objectProvider.readDirectory(triggeredBy, "")
+
+    const rootDirectory = ObjectEntry.findDirectoryOrThrow(data, "root/");
+    const trashDirectory = ObjectEntry.findDirectoryOrThrow(data, "trash/");
+
+    await readAndImport(rootDirectory, triggeredBy, root.id, rescan);
+    await readAndImport(trashDirectory, triggeredBy, trash.id, rescan);
+
+    await rescanRepository.save(Rescan.complete(rescan));
+  } catch (error) {
+    await rescanRepository.save(Rescan.catchError(rescan, error));
   }
-
-  const command = new ListObjectsV2Command({
-    Bucket: bucketConfig.bucketName,
-    Prefix: "",
-    Delimiter: "/",
-  });
-
-  const response = await client.send(command);
-
-  const files = (response.Contents ?? [])
-  const directories = (response.CommonPrefixes ?? [])
-
-  console.log("Files:", files);
-  console.log("Directories:", directories);
-
-  await setTimeout(1000); // Simulate some delay for the rescan process
-
-  const rescan = Rescan.launch({ ownerId: triggeredBy });
-  await save(rescan);
-
-  Promise.resolve()
-    .then(async () => {
-      for(let i = 0; i < 200; i++) {
-        await setTimeout(100);
-        rescan.importedDirectories += directories.length;
-        rescan.importedFiles += files.length;
-        await save(rescan);
-      }
-    })
-    .then(() => {
-      return save(Rescan.complete(rescan));
-    })
-    .catch((error) => {
-      return save(Rescan.catchError(rescan, error));
-    });
 };
+
+const importEntryObject = (ownerId: UserId.UserId, parentId: DirectoryId.DirectoryId, rescan: Rescan.RescanStatusRunning) => async (entry: ObjectEntry.ObjectEntry) => {
+  if (ObjectEntry.isFile(entry)) {
+    await importObjectFile(ownerId, parentId, rescan, entry);
+  } else if (ObjectEntry.isDirectory(entry)) {
+    await importObjectDirectory(ownerId, parentId, rescan, entry);
+  }
+};
+
+async function importObjectFile(ownerId: UserId.UserId, parentId: DirectoryId.DirectoryId, rescan: Rescan.RescanStatusRunning, objectFile: ObjectFile.ObjectFile) {
+  const metadata = await objectProvider.readMetadata(ownerId, objectFile.path);
+  const file: File = {
+    id: FileId.random(),
+    name: ObjectFile.getName(objectFile),
+    size: metadata.size,
+    mimeType: metadata.mimeType,
+    lastModified: metadata.lastModified,
+    ownerId,
+    parentId,
+  };
+  await fileRepository.save(file);
+  rescan.importedFiles += 1;
+  await rescanRepository.save(rescan);
+}
+
+async function importObjectDirectory(ownerId: UserId.UserId, parentId: DirectoryId.DirectoryId, rescan: Rescan.RescanStatusRunning, objectDirectory: ObjectDirectory.ObjectDirectory) {
+  const directory = ObjectDirectory.toDirectory(objectDirectory, ownerId, parentId);
+  await directoryRepository.save(directory);
+  rescan.importedDirectories += 1;
+  await rescanRepository.save(rescan);
+  await readAndImport(objectDirectory, ownerId, directory.id, rescan);
+}
+
+async function readAndImport(parentObject: ObjectDirectory.ObjectDirectory, ownerId: UserId.UserId, parentId: DirectoryId.DirectoryId, rescan: Rescan.RescanStatusRunning) {
+  const entryObjects = await objectProvider.readDirectory(ownerId, parentObject.path)
+  await Promise.all(entryObjects.map(importEntryObject(ownerId, parentId, rescan)));
+}
+

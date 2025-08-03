@@ -72,16 +72,31 @@ CREATE TABLE rescans_error (
 );
 
 CREATE VIEW entities AS
-SELECT directories.id,
-       'directory'::text       AS type,
-       directories.name,
-       NULL::character varying AS mime_type,
-       directories.parent_id
-FROM directories
-UNION ALL
-SELECT files.id,
-       'file'::text AS type,
-       files.name,
-       files.mime_type,
-       files.parent_id
-FROM files;
+SELECT combined.id,
+       combined.type,
+       combined.name,
+       combined.mime_type,
+       combined.size,
+       combined.parent_id,
+       combined.owner_id,
+       users.name    AS owner_name,
+       users.picture AS owner_picture
+FROM (SELECT directories.id,
+             'directory'::text AS type,
+             directories.name,
+             NULL::integer AS size,
+             NULL::character varying AS mime_type,
+             directories.parent_id,
+             directories.owner_id
+      FROM directories
+      UNION ALL
+      SELECT files.id,
+             'file'::text AS type,
+             files.name,
+             files.size,
+             files.mime_type,
+             files.parent_id,
+             files.owner_id
+      FROM files) combined
+         JOIN users ON combined.owner_id::text = users.id::text
+

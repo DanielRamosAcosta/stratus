@@ -67,7 +67,7 @@ function listEntryToDomain(entry: EntryView): ListEntry {
       id: entry.id,
       type: "file",
       name: entry.name,
-      size: 0,
+      size: entry.size as number,
       mimeType: entry.mime_type as string,
       owner: {
         id: UserId.cast(entry.owner_id),
