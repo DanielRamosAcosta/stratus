@@ -70,7 +70,7 @@ export function NavMain({ rootDirectoryId, trashDirectoryId }: { rootDirectoryId
         <Separator />
         <SidebarMenuItem>
           <SidebarMenuButton asChild tooltip="Trash" className="flex-1">
-            <Link to={`/dashboard/folders/${trashDirectoryId}`}>
+            <Link to={`/dashboard/trash/${trashDirectoryId}`}>
               <Trash2 className="size-4" />
               <span>Trash</span>
             </Link>
